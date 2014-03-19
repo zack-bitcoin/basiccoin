@@ -134,8 +134,9 @@ def board(dic):
     s=easyForm('/home', 'main menu', '''    <input type="hidden" name="privkey" value="{}"><input type="hidden" name="board" value="{}">'''.format(privkey, board))
     out=out.format(s)
     out=out.format("<h1>"+str(board)+"</h1>{}")
-    for i in state[board]:
-        out=out.format("<p>"+i+"</p>{}")
+    if board in state:
+        for i in state[board]:
+            out=out.format("<p>"+i+"</p>{}")
     out=out.format(easyForm('/board', 'leave a comment', '''
     <input type="hidden" name="do" value="message">
     <input type="text" name="message" value="">
