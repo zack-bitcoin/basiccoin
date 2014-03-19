@@ -1,5 +1,5 @@
-peers_list=[]#'http://www.sbb.tc:82/info?{}',
-            #'http://162.243.13.112/info?{}']
+peers_list=[#'http://www.sbb.tc:82/info?{}',
+            'http://162.243.13.112/info?{}']
 #            'http://fnsxouwikizbpqtq.onion/info?{}']#add friends!!
 listen_port=8072
 gui_port=8091

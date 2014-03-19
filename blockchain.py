@@ -2,7 +2,7 @@ import string,cgi,time, json, random, copy, os, copy, urllib, message, urllib2, 
 import pybitcointools as pt
 import state_library
 genesis={'zack':'zack', 'length':-1, 'nonce':'22', 'sha':'00000000000'}
-genesisbitcoin=291266-1224#1220
+genesisbitcoin=291380-1170#1220
 chain=[genesis]
 chain_db='chain.db'
 transactions_database='transactions.db'
