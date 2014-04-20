@@ -1,9 +1,4 @@
-messagecoin
-============
+basiccoin
+=========
 
-a cryptocurrency which supports plain text instant messaging
-
-to run:
-python main.py
-
-then send your browser to: http://localhost:8090
+This is the smallest cryptocurrency I can make. It is meant to be used as the core of new cryptocurrencies.
