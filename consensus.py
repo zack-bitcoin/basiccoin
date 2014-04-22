@@ -1,17 +1,24 @@
-import blockchain, custom, tools, networking, stackDB, random
+import blockchain, custom, tools, networking, stackDB, random, time
 def mine(hashes_till_check, reward_address):
     def make_mint(pubkey): return {'type':'mint', 'id':pubkey, 'count':blockchain.count(pubkey)}
     def genesis(pubkey):
         out={'version':custom.version,
              'length':0,
+             'time':time.time(),
+             'target':blockchain.target(),
              'txs':[make_mint(pubkey)]}
         out=tools.unpackage(tools.package(out))
         return out
     def make_block(prev_block, txs, pubkey):
         txs.append(make_mint(pubkey))
+        leng=int(prev_block['length'])+1
+#        print('prev block: ' +str(prev_block))
+#        print('in make block leng: ' +str(type(leng)))
         out={'version':custom.version,
              'txs':txs,
-             'length':prev_block['length']+1,
+             'length':leng,
+             'time':time.time(),
+             'target':blockchain.target(),
              'prevHash':tools.det_hash(prev_block)}
         out=tools.unpackage(tools.package(out))
         return out
@@ -30,7 +37,7 @@ def mine(hashes_till_check, reward_address):
         prev_block=blockchain.db_get(length)
         txs=stackDB.current_txs()
         block=make_block(prev_block, txs, reward_address)
-    block=POW(block, hashes_till_check, blockchain.target)
+    block=POW(block, hashes_till_check, blockchain.target(block['length']))
     blockchain.add_block(block)
 
 def peers_check(peers):
@@ -43,7 +50,9 @@ def peers_check(peers):
         return tools.det_hash(sorted(newblocks, key=lambda x: x['length'])[-1])==recent_hash
     def peer_check(peer):
         cmd=(lambda x: networking.send_command(peer, x))
+        print('#################3')
         block_count=cmd({'type':'blockCount'})
+        print('##$$$$$$$$$$$$$$')
         if type(block_count)!=type({'a':1}):
             return 
         if 'error' in block_count.keys():
@@ -91,6 +100,8 @@ def peers_check(peers):
         for block in blocks:
             print('hopefully blocks are coming in order')
             blockchain.add_block(block)
+    for peer in peers:
+        peer_check(peer)
 def suggestions():
     def file_map(func, file):
         things=stackDB.load(file)
@@ -98,10 +109,10 @@ def suggestions():
         [func(x) for x in things]
     map(file_map, [blockchain.add_tx, blockchain.add_block], ['suggested_txs.db', 'suggested_blocks.db'])
 def mainloop(reward_address, peers, hashes_till_check):
-    while True:
-#    for i in range(5):
+#    while True:
+    for i in range(5):
         peers_check(peers)
-        mine(hashes_till_check, reward_address)               
+#        mine(hashes_till_check, reward_address)               
         suggestions()
 
 #mainloop('zack', [], 100000000)
