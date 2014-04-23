@@ -44,6 +44,9 @@ def add_tx(tx):
         return True
     def verify_tx(tx, txs):
         boolean={'spend':spend_verify, 'mint':mint_verify}
+        if type(tx) != type({'a':1}) or 'type' not in tx:
+            print('type error')
+            return False
         if tx['type'] not in boolean.keys(): 
             print('caps')
             return False
@@ -63,55 +66,80 @@ def add_tx(tx):
     else:
         print('tx did not get added')
         return False
+targets={}
 times={}#stores blocktimes
-def recent_blocktimes(size=100, length=0):
-    def get_time(length):
+def recent_blockthings(key, size=100, length=0):
+    storage={}
+    if key=='time': storage=times
+    if key=='target': storage=targets
+    def get_val(length):
         leng=str(length)
-        if not leng in times:
-            times[leng]=db_get(leng)['time']
-        return times[leng]
+        if not leng in storage:
+            storage[leng]=db_get(leng)[key]
+        return storage[leng]
     if length==0: length=stackDB.current_length()
-    f=lambda x: [get_time(y) for y in x]
+    f=lambda x: [get_val(y) for y in x]
     try:
         return f(range(length-size, length))
     except:
         return f(range(0, length))
 def target(length=0):
-    def detensify(frac, m): return (frac/m+(m-1.0)/m) #brings frac closer to the value 1 by a factor of m
+#    def detensify(frac, m): return (frac/m+(m-1.0)/m) #brings frac closer to the value 1 by a factor of m
+#    inflection=0.977159968#This constant is selected such that the 30 most recent blocks count for 1/2 the total weight.
+    inflection=0.985#This constant is selected such that the 50 most recent blocks count for 1/2 the total weight.
     def buffer(str):
         if len(str)<64: return buffer('0'+str)
         return str
     def multiply_blocktime(target, number): 
-        num=1.03#to dampen oscilations, we only allow difficulty to change by a max of 3% per block.
-        if number>num: 
-            print('Faster')
-            number=num
-        elif number<1/(num): 
-            number=1/(num)
-            print('Slower')
-        return buffer(str(hex(int(int(target, 16)*number)))[2:-1])
+        try:
+            return buffer(str(hex(int(int(target, 16)*number)))[2:-1])
+        except:
+            return buffer('f'*62)
+    def weights(inflection, length):
+        out=[]
+        for i in range(length):#weigh blocktimes against geometric distribution
+            out.append(inflection**(length-i)) #b/c we care more about the recent blocks 
+        return out
+    def estimate_target():
+        def invert(n):
+            try:
+                return buffer(str(hex(int('f'*128, 16)/int(n, 16)))[2:-1])#use double-size for division, to reduce information leakage.
+            except:
+                return buffer('f'*62)
+        def plus(a, b):
+            return buffer(str(hex(int(a, 16)+int(b, 16)))[2:-1])
+        def acc(func, l):
+            if len(l)<1: return 0
+            while len(l)>1:
+                l=[func(l[0], l[1])]+l[2:]
+            return l[0]
+        targets=recent_blockthings('target', 400)        
+        for i in range(len(targets)):
+            targets[i]=invert(targets[i])#invert because target is proportional to 1/(# hashes required to mine a block on average)
+        w=weights(inflection, len(targets))
+        total_weight=sum(w)
+        weighted_targets=[multiply_blocktime(targets[i], w[i]/total_weight) for i in range(len(targets))]
+        return invert(acc(plus, weighted_targets))
+    def estimate_time():
+        data=[]
+        for x in recent_blockthings('time', 400):
+            try:
+                data.append(x-prev_x)
+            except:
+                pass
+            prev_x=x
+        w=weights(inflection, len(data))
+        tw=sum(w)
+        return sum([w[i]*data[i]/tw for i in range(len(data))])
     if length==0 or length==stackDB.current_length()+1: 
         length=stackDB.current_length()+1
     else:#we calculated this before
-        return db_get(length)['target']
-    gaps=[]#load the 1000 most recent blocklengths.
-    for time in recent_blocktimes(1000):
-        try:
-            gaps.append(time-prev_time)
-        except:
-            pass
-        prev_time=time
-    w=0.977159968#This constant is selected such that the 30 most recent blocks count for 1/2 the total weight.
-    weights=[]
-    for i in range(len(gaps)):#weigh blocktimes against geometric distribution
-        weights.append(w**(len(gaps)-i)) #b/c we care more about the recent blocks 
-    total_weight=sum(weights)            #than old blocks.
-    estimated_blocktime=sum([weights[i]*gaps[i]/total_weight for i in range(len(gaps))])
-    try:
-        prev_target=db_get(str(length-1))['target']
-    except:
-        prev_target=buffer('f'*63)
-    return multiply_blocktime(prev_target, detensify(estimated_blocktime/custom.blocktime(length), 100))
+        return targets[str(length)]
+    if length<10:
+        return buffer('f'*62)
+    e=estimate_time()
+    f=estimate_target()
+    return multiply_blocktime(f, e/custom.blocktime(length))
 def adjust_amount(pubkey, amount):
     acc=db_get(pubkey)
     acc['amount']+=amount
@@ -125,7 +153,7 @@ def add_block(block):
         if len(mylist)<1: return 0
         return sorted(mylist)[len(mylist) / 2]
     def block_check(block):
-        earliest=median(recent_blocktimes())
+        earliest=median(recent_blockthings('time'))
         length=stackDB.current_length()
         if type(block)!=type({'a':1}):
             print('34')
@@ -166,8 +194,7 @@ def add_block(block):
         adjust_count(tx['id'])
     update={'mint':mint, 'spend':spend}
     if block_check(block):
-        print('add_block: '+str(block['length']))
-        print('target: ' +str(block['target']))
+        print('add_block: '+str(block))
 #        print('add_block: '+str(block['time'])+ " length: " + str(block['length']))
         db_put(block['length'], block)
         stackDB.set_length(block['length'])
@@ -178,12 +205,8 @@ def add_block(block):
             stackDB.set_hash(tools.det_hash(0))
         for tx in block['txs']:
             update[tx['type']](tx)
-#    else:
-#        error('here')
-    #update state about the new txs
-    #create a backup        
-#        DB.Put(txid(tx), package({'tx':tx, 'status':'unspent'}))
 def delete_block():
+    print('DELETE BLOCK')
     def mint(tx):
         adjust_amount(tx['id'], -custom.block_reward)
         adjust_count(tx['id'], False)

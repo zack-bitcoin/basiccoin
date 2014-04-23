@@ -1,4 +1,4 @@
-import networking, custom, stackDB
+import networking, custom, stackDB, tools
 #every message needs to be smaller than 55,000 letters, but blocks need to be bigger than that.
 #to make it simple, first version requires txs to be smaller than 55,000
 
@@ -22,7 +22,7 @@ def main(dic):
             ran[0]=1
         out=[]
         counter=0
-        while len(package(out))<50000 and ran[0]+counter<=ran[1]:
+        while len(tools.package(out))<50000 and ran[0]+counter<=ran[1]:
             counter+=1
             out.append(blockchain.db_get(ran[0]+counter))
         return out

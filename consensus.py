@@ -24,8 +24,14 @@ def mine(hashes_till_check, reward_address):
         return out
     def POW(block, hashes, target):
         block[u'nonce']=random.randint(0,100000000000000000)
-        while tools.det_hash(block)>target:
+        while tools.det_hash(block)>target:#this computation a little more complex than necessary. This makes it more difficult to mine bigger blocks than smaller blocks. Maybe hash(block) should= hash({'nonce':5,'else':hash(everything else))
             block[u'nonce']+=1
+            ''' for testing sudden loss in hashpower from miners.
+            if block[u'length']>150:# and block[u'nonce']%10==0:
+                time.sleep(0.1)
+            else:
+                time.sleep(0.01)
+            '''
         return block
         #try to mine a block that many times. add it to the database if we find one.
     length=stackDB.current_length()
@@ -44,40 +50,42 @@ def peers_check(peers):
     #peer=[host, port] ex. ['localhost', 8900]
     def fork_check(newblocks):
         #looks at some blocks obtained from a peer. If we are on a different fork than the partner, this returns True. If we are on the same fork as the peer, then this returns False.
-        length=current_length()
-        block=db_get(length)
-        recent_hash=tools.det_hash(block)
-        return tools.det_hash(sorted(newblocks, key=lambda x: x['length'])[-1])==recent_hash
+        try:
+            length=stackDB.current_length()
+            block=blockchain.db_get(length)
+            recent_hash=tools.det_hash(block)
+            return tools.det_hash(sorted(newblocks, key=lambda x: x['length'])[-1])==recent_hash
+        except:
+            return False
     def peer_check(peer):
         cmd=(lambda x: networking.send_command(peer, x))
-        print('#################3')
         block_count=cmd({'type':'blockCount'})
-        print('##$$$$$$$$$$$$$$')
         if type(block_count)!=type({'a':1}):
             return 
         if 'error' in block_count.keys():
             return         
-        length=current_length()
+        length=stackDB.current_length()
         ahead=int(block_count['length'])-length
         if ahead < 0:#if we are ahead of them
-            print('len chain: ' +str(len(chain)))
             print('length: ' +str(int(block_count['length'])+1))
             try:
                 cmd({'type':'pushblock', 'block':block})
-                pushblock(db_get(str(block_count['length']+1)), peer)
+                #                pushblock(blockchain.db_get(str(block_count['length']+1)), peer)
+                add_block(blockchain.db_get(str(block_count['length']+1)), peer)
             except:
                 pass
             return []
         if ahead == 0:#if we are on the same block, ask for any new txs
             print('ON SAME BLOCK')
-            block=db_get(length)
-            if tools.det_hash(block)!=block_count['recent_hash']:
-                delete_block()
+            block=blockchain.db_get(length)
+            if 'recent_hash' in block_count and tools.det_hash(block)!=block_count['recent_hash']:
+                blockchain.delete_block()
                 print('WE WERE ON A FORK. time to back up.')
                 return []
-            my_txs=load_txs()
-            txs=cmd({'type':'transactions'})
-            add_txs(txs)
+            my_txs=stackDB.current_txs()
+            txs=cmd({'type':'txs'})
+            for tx in txs:
+                blockchain.add_tx(tx)
             pushers=[x for x in my_txs if x not in txs]
             for push in pushers:
                 cmd({'type':'pushtx', 'tx':tx})
@@ -100,7 +108,9 @@ def peers_check(peers):
         for block in blocks:
             print('hopefully blocks are coming in order')
             blockchain.add_block(block)
+    print('peer_check: '+str(peers))
     for peer in peers:
+        print('peer: ' +str(peer))
         peer_check(peer)
 def suggestions():
     def file_map(func, file):
@@ -109,10 +119,10 @@ def suggestions():
         [func(x) for x in things]
     map(file_map, [blockchain.add_tx, blockchain.add_block], ['suggested_txs.db', 'suggested_blocks.db'])
 def mainloop(reward_address, peers, hashes_till_check):
-#    while True:
-    for i in range(5):
+    while True:
+#    for i in range(5):
+        mine(hashes_till_check, reward_address)               
         peers_check(peers)
-#        mine(hashes_till_check, reward_address)               
         suggestions()
 
 #mainloop('zack', [], 100000000)

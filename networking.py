@@ -36,14 +36,14 @@ def connect(msg, host, port):
         print('wrong sized message')
         return
     s = socket.socket()
-    s.connect((str(host), int(port)))
-    msg['version']=custom.version
-    s.send(tools.package(msg))
-    response = s.recv(MAX_MESSAGE_SIZE)
-    print(response)
     try:
+        s.connect((str(host), int(port)))
+        msg['version']=custom.version
+        s.send(tools.package(msg))
+        response = s.recv(MAX_MESSAGE_SIZE)
+        print(response)
         return tools.unpackage(response)
     except:
         print('disconnect')
-        return
+        return {'error':'error'}
 def send_command(peer, msg): return connect(msg, peer[0], peer[1])
