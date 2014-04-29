@@ -1,15 +1,16 @@
-import time, leveldb, copy, custom, tools, stackDB, networking
-import pybitcointools as pt
-DB=leveldb.LevelDB('DB.db')
-def db_get (n): 
+import time, copy, custom, tools, stackDB, networking, transactions
+def db_get (n, DB): 
     try:
         a=DB.Get(str(n))
     except:
         error('here')
     return tools.unpackage(a)
-def db_put(key, dic): return DB.Put(str(key), tools.package(dic))
-def db_delete(key): return DB.delete(str(key))
-def count(pubkey):
+def db_put(key, dic, DB): 
+    print('IN DB PUT')
+    DB.Put(str(key), tools.package(dic))
+    print('OUT DB PUT')    
+def db_delete(key, DB): return DB.Delete(str(key))
+def count(pubkey, DB):
     c=0
     try:
         txs=stackDB.current_txs()
@@ -20,30 +21,19 @@ def count(pubkey):
         if pubkey==t['id']:
             c+=1
     try:
-        acc=db_get(pubkey)
+        acc=db_get(pubkey, DB)
     except:
         acc={'count':0, 'amount':0}
-        db_put(pubkey, acc)
-    return acc['count']+c
-def add_tx(tx):
-    def verify_count(tx, txs): return tx['count']==count(tx['id'])
-    def spend_verify(tx, txs): 
         try:
-            if not pt.ecdsa_verify(tools.det_hash(tx, keys), tx['signature'], db_get(tx['id'])['pubkey']): 
-                print('Qwerty')
-                return False
-            return db_get(tx['id'])['amount']>tx['amount']+custom.fee
+            db_put(pubkey, acc, DB)
         except:
-            print('ase')
-            return False
-    def mint_verify(tx, txs):
-        for t in txs:#ensures 1 mint per block.
-            if t['type']=='mint': 
-                print('aa')
-                return False
-        return True
+            pass
+    return acc['count']+c
+def add_tx(tx, DB):
+    def verify_count(tx, txs): return tx['count']==count(tx['id'], DB)
     def verify_tx(tx, txs):
-        boolean={'spend':spend_verify, 'mint':mint_verify}
+        #boolean={'spend':spend_verify, 'mint':mint_verify}
+        boolean=transactions.tx_check
         if type(tx) != type({'a':1}) or 'type' not in tx:
             print('type error')
             return False
@@ -51,10 +41,12 @@ def add_tx(tx):
             print('caps')
             return False
         if not verify_count(tx, txs): 
+            print('tx: ' +str(tx))
+            print(count(tx['id'], DB))
             print('abc')
             return False
         if len(tools.package(txs+[tx]))>networking.MAX_MESSAGE_SIZE-5000:
-            #change 5000 a number bigger than the size of the rest of the block
+            #change 5000 a number bigger than the size of the rest of the bloc
             #maybe 5000 not needed, if block and txs are sent as different messages.
             print('maxed out zeroth confirmation txs')
             return False
@@ -68,14 +60,16 @@ def add_tx(tx):
         return False
 targets={}
 times={}#stores blocktimes
-def recent_blockthings(key, size=100, length=0):
+def recent_blockthings(key, DB, size=100, length=0):
     storage={}
     if key=='time': storage=times
     if key=='target': storage=targets
     def get_val(length):
         leng=str(length)
         if not leng in storage:
-            storage[leng]=db_get(leng)[key]
+            #a=db_get(leng, DB)
+            #print('HERE: ' + str(a))
+            storage[leng]=db_get(leng, DB)[key]
         return storage[leng]
     if length==0: length=stackDB.current_length()
     f=lambda x: [get_val(y) for y in x]
@@ -83,7 +77,7 @@ def recent_blockthings(key, size=100, length=0):
         return f(range(length-size, length))
     except:
         return f(range(0, length))
-def target(length=0):
+def target(DB, length=0):
 #    def detensify(frac, m): return (frac/m+(m-1.0)/m) #brings frac closer to the value 1 by a factor of m
 #    inflection=0.977159968#This constant is selected such that the 30 most recent blocks count for 1/2 the total weight.
     inflection=0.985#This constant is selected such that the 50 most recent blocks count for 1/2 the total weight.
@@ -100,7 +94,7 @@ def target(length=0):
         for i in range(length):#weigh blocktimes against geometric distribution
             out.append(inflection**(length-i)) #b/c we care more about the recent blocks 
         return out
-    def estimate_target():
+    def estimate_target(DB):
         def invert(n):
             try:
                 return buffer(str(hex(int('f'*128, 16)/int(n, 16)))[2:-1])#use double-size for division, to reduce information leakage.
@@ -113,16 +107,16 @@ def target(length=0):
             while len(l)>1:
                 l=[func(l[0], l[1])]+l[2:]
             return l[0]
-        targets=recent_blockthings('target', 400)        
+        targets=recent_blockthings('target', DB, 400)        
         for i in range(len(targets)):
             targets[i]=invert(targets[i])#invert because target is proportional to 1/(# hashes required to mine a block on average)
         w=weights(inflection, len(targets))
         total_weight=sum(w)
         weighted_targets=[multiply_blocktime(targets[i], w[i]/total_weight) for i in range(len(targets))]
         return invert(acc(plus, weighted_targets))
-    def estimate_time():
+    def estimate_time(DB):
         data=[]
-        for x in recent_blockthings('time', 400):
+        for x in recent_blockthings('time', DB, 400):
             try:
                 data.append(x-prev_x)
             except:
@@ -134,27 +128,23 @@ def target(length=0):
     if length==0 or length==stackDB.current_length()+1: 
         length=stackDB.current_length()+1
     else:#we calculated this before
+        print('targets: ' +str(targets))
+        print('length: ' +str(length))
         return targets[str(length)]
-    if length<10:
-        return buffer('f'*62)
-    e=estimate_time()
-    f=estimate_target()
+    if length<3:
+        return buffer('f'*61)
+    e=estimate_time(DB)
+    f=estimate_target(DB)
     return multiply_blocktime(f, e/custom.blocktime(length))
-def adjust_amount(pubkey, amount):
-    acc=db_get(pubkey)
-    acc['amount']+=amount
-    db_put(pubkey, acc)        
-def adjust_count(pubkey, upward=True):
-    acc=db_get(pubkey)
-    acc['count']+=1
-    db_put(pubkey, acc)
-def add_block(block):
+def add_block(block, DB):
+    #we should update sig_length
     def median(mylist): #median is good for weeding out liars, so long as the liars don't have 51% hashpower.
         if len(mylist)<1: return 0
         return sorted(mylist)[len(mylist) / 2]
-    def block_check(block):
-        earliest=median(recent_blockthings('time'))
+    def block_check(block, DB):
+        earliest=median(recent_blockthings('time', DB))
         length=stackDB.current_length()
+        if 'error' in block.keys(): return False
         if type(block)!=type({'a':1}):
             print('34')
             return False
@@ -163,69 +153,53 @@ def add_block(block):
             print(length)
             print('12')
             return False
-        if length >=0 and tools.det_hash(db_get(length))!=block['prevHash']: 
+        if length >=0 and tools.det_hash(db_get(length, DB))!=block['prevHash']: 
             print('22')
             return False
-        if 'target' not in block.keys() or tools.det_hash(block)>block['target'] or block['target']!=target(block['length']):
+        if u'target' not in block.keys() or tools.det_hash(block)>block['target'] or block['target']!=target(DB, block['length']):
             print('11')
             return False
         if 'time' not in block or block['time']>time.time() or block['time']<earliest:
             print('2323')
             return False
-        backup=stackDB.current_txs()
-        stackDB.reset_txs()
-        mints=0
-        for tx in block['txs']:
-            if tx['type']=='mint':
-                mints+=1
-            if not add_tx(tx) or mints>1:
-                stackDB.reset_txs()
-                for tx in backup:
-                    add_tx(tx)
-                print('overmint')
-                return False
         return True
-    def mint(tx):
-        adjust_amount(tx['id'], custom.block_reward)
-        adjust_count(tx['id'])
-    def spend(tx):
-        adjust_amount(tx['id'], -tx['amount'])
-        adjust_amount(tx['to'], tx['amount']-custom.fee)
-        adjust_count(tx['id'])
-    update={'mint':mint, 'spend':spend}
-    if block_check(block):
+    if block_check(block, DB):
         print('add_block: '+str(block))
 #        print('add_block: '+str(block['time'])+ " length: " + str(block['length']))
-        db_put(block['length'], block)
+        print('TEST')
+        db_put(block['length'], block, DB)
         stackDB.set_length(block['length'])
         stackDB.reset_txs()
         try:
-            stackDB.set_hash(tools.det_hash(db_get(block['length']-1)))
+            stackDB.set_hash(tools.det_hash(db_get(block['length']-1, DB)))
         except:
             stackDB.set_hash(tools.det_hash(0))
         for tx in block['txs']:
-            update[tx['type']](tx)
-def delete_block():
+            transactions.update[tx['type']](tx, DB)
+        print('finished adding block')
+    else:
+        print('FAILED TO ADD BLOCK')
+def delete_block(DB):
     print('DELETE BLOCK')
-    def mint(tx):
-        adjust_amount(tx['id'], -custom.block_reward)
-        adjust_count(tx['id'], False)
-    def spend(tx):
-        adjust_amount(tx['id'], tx['amount'])
-        adjust_amount(tx['to'], -tx['amount'])
-        adjust_count(tx['id'], False)
     length=stackDB.current_length()
-    targets.pop(str(length))
-    times.pop(str(length))
-    block=db_get(length)
+    if length<0: return
+    try:
+        targets.pop(str(length))
+        times.pop(str(length))
+    except:
+        pass
+    block=db_get(length, DB)
     orphans=stackDB.current_txs()
     stackDB.reset_txs()
     stackDB.set_length(length-1)
-    stackDB.set_hash(tools.det_hash(db_get(length-1)))
-    downdate={'mint':mint, 'spend':spend}
+    try:
+        stackDB.set_hash(tools.det_hash(db_get(length-1, DB)))
+    except:
+        pass
     for tx in block['txs']:
         orphans.append(tx)
-        downdate[tx['type']](tx)
-    db_delete(length)
+        transactions.downdate[tx['type']](tx, DB)
+    db_delete(length, DB)
     for orphan in sorted(orphans, key=lambda x: x['count']):
-        add_tx(tx)
+        add_tx(tx, DB)
+

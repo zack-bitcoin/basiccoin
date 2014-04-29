@@ -1,4 +1,4 @@
-import socket, subprocess, re, blockchain, tools, custom, time
+import socket, subprocess, re, tools, custom, time
 MAX_MESSAGE_SIZE = 60000
 def kill_processes_using_ports(ports):
     popen = subprocess.Popen(['netstat', '-lpn'],
@@ -13,7 +13,7 @@ def kill_processes_using_ports(ports):
         if match:
             pid = match.group('pid')
             subprocess.Popen(['kill', '-9', pid])
-def serve_forever(message_handler_func, PORT):
+def serve_forever(message_handler_func, PORT, queue):
     try:
         #only works in linux
         kill_processes_using_ports([str(PORT)])
@@ -30,20 +30,22 @@ def serve_forever(message_handler_func, PORT):
         data = client.recv(MAX_MESSAGE_SIZE)
         #we could insert security checks here
         data=tools.unpackage(data)
-        client.send(tools.package(message_handler_func(data)))
+        client.send(tools.package(message_handler_func(data, queue)))
 def connect(msg, host, port):
     if len(msg)<1 or len(msg)>MAX_MESSAGE_SIZE:
         print('wrong sized message')
         return
     s = socket.socket()
     try:
+        s.settimeout(2)
         s.connect((str(host), int(port)))
         msg['version']=custom.version
         s.send(tools.package(msg))
         response = s.recv(MAX_MESSAGE_SIZE)
         print(response)
         return tools.unpackage(response)
-    except:
+    except Exception as e:
+        print('THE ERROR WAS: ' +str(e))
         print('disconnect')
         return {'error':'error'}
 def send_command(peer, msg): return connect(msg, peer[0], peer[1])
