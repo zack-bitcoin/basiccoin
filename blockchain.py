@@ -1,4 +1,5 @@
 import time, copy, custom, tools, stackDB, networking, transactions
+#this file explains how we talk to the database. It explains the rules for adding blocks and transactions.
 def db_get (n, DB): 
     try:
         a=DB.Get(str(n))

@@ -1,4 +1,5 @@
 import pybitcointools as pt
+#This is for easy customization of new currencies.
 database_name='DB.db'
 listen_port=8900
 version="VERSION"

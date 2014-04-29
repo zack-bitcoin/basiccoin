@@ -1,4 +1,5 @@
 import json, hashlib
+#These deterministic functions are used a lot in blockchain.py and consensus.py
 def package(dic):return json.dumps(dic)
 def unpackage(dic):return json.loads(dic)
 def det_hash(x):

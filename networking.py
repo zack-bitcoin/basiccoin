@@ -1,4 +1,5 @@
 import socket, subprocess, re, tools, custom, time
+#this file explains how sockets work for networking.
 MAX_MESSAGE_SIZE = 60000
 def kill_processes_using_ports(ports):
     popen = subprocess.Popen(['netstat', '-lpn'],

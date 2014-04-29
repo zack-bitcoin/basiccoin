@@ -1,6 +1,6 @@
 import blockchain, custom
 import pybitcointools as pt
-
+#This file explains how we tell if a transaction is valid or not, it explains how we update the system when new transactions are added to the blockchain.
 
 def spend_verify(tx, txs): 
     try:

@@ -1,5 +1,5 @@
 import json
-#This is unnecessary because queues do the same thing. Queues are superior because the info could stay in ram.
+#This file is unnecessary because queues do the same thing. Queues are superior because the info could stay in ram.
 #https://docs.python.org/2/library/queue.html
 def load(file):
     def line2dic(line):

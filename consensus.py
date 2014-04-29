@@ -1,4 +1,5 @@
 import blockchain, custom, tools, networking, stackDB, random, time
+#This file mines blocks and talks to peers. It maintains consensus of the blockchain.
 def mine(hashes_till_check, reward_address, DB):
     def make_mint(pubkey, DB): return {'type':'mint', 'id':pubkey, 'count':blockchain.count(pubkey, DB)}
     def genesis(pubkey, DB):

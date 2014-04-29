@@ -1,4 +1,9 @@
 import networking, custom, stackDB, tools, leveldb, shutil, time, blockchain
+#Sometimes peers ask us for infomation or push new info to us. This file explains how we respond.
+
+
+
+
 #every message needs to be smaller than 55,000 letters, but blocks need to be bigger than that.
 #to make it simple, first version requires txs to be smaller than 55,000
 
