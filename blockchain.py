@@ -6,10 +6,7 @@ def db_get (n, DB):
     except:
         error('here')
     return tools.unpackage(a)
-def db_put(key, dic, DB): 
-    print('IN DB PUT')
-    DB.Put(str(key), tools.package(dic))
-    print('OUT DB PUT')    
+def db_put(key, dic, DB):  return DB.Put(str(key), tools.package(dic))
 def db_delete(key, DB): return DB.Delete(str(key))
 def count(pubkey, DB):
     c=0
@@ -25,10 +22,10 @@ def count(pubkey, DB):
         acc=db_get(pubkey, DB)
     except:
         acc={'count':0, 'amount':0}
-        try:
-            db_put(pubkey, acc, DB)
-        except:
-            pass
+        db_put(pubkey, acc, DB)
+    if 'count' not in acc:
+        acc['count']=0
+        db_put(pubkey, acc, DB)
     return acc['count']+c
 def add_tx(tx, DB):
     def verify_count(tx, txs): return tx['count']==count(tx['id'], DB)
@@ -42,8 +39,8 @@ def add_tx(tx, DB):
             print('caps')
             return False
         if not verify_count(tx, txs): 
-            print('tx: ' +str(tx))
-            print(count(tx['id'], DB))
+            print('tx: ' +str(tx))#1
+            print(count(tx['id'], DB))#4
             print('abc')
             return False
         if len(tools.package(txs+[tx]))>networking.MAX_MESSAGE_SIZE-5000:
@@ -51,7 +48,7 @@ def add_tx(tx, DB):
             #maybe 5000 not needed, if block and txs are sent as different messages.
             print('maxed out zeroth confirmation txs')
             return False
-        return boolean[tx['type']](tx, txs)
+        return boolean[tx['type']](tx, txs, DB)
     txs=stackDB.current_txs()
     if verify_tx(tx, txs):
         stackDB.add_tx(tx)
@@ -68,8 +65,6 @@ def recent_blockthings(key, DB, size=100, length=0):
     def get_val(length):
         leng=str(length)
         if not leng in storage:
-            #a=db_get(leng, DB)
-            #print('HERE: ' + str(a))
             storage[leng]=db_get(leng, DB)[key]
         return storage[leng]
     if length==0: length=stackDB.current_length()
@@ -129,8 +124,6 @@ def target(DB, length=0):
     if length==0 or length==stackDB.current_length()+1: 
         length=stackDB.current_length()+1
     else:#we calculated this before
-        print('targets: ' +str(targets))
-        print('length: ' +str(length))
         return targets[str(length)]
     if length<3:
         return buffer('f'*61)
@@ -150,15 +143,15 @@ def add_block(block, DB):
             print('34')
             return False
         if int(block['length'])!=int(length)+1: 
-            print(block['length'])
-            print(length)
+            #print(block['length'])
+            #print(length)
             print('12')
             return False
         if length >=0 and tools.det_hash(db_get(length, DB))!=block['prevHash']: 
             print('22')
             return False
         if u'target' not in block.keys() or tools.det_hash(block)>block['target'] or block['target']!=target(DB, block['length']):
-            print('11')
+            #print('11')
             return False
         if 'time' not in block or block['time']>time.time() or block['time']<earliest:
             print('2323')
@@ -167,7 +160,6 @@ def add_block(block, DB):
     if block_check(block, DB):
         print('add_block: '+str(block))
 #        print('add_block: '+str(block['time'])+ " length: " + str(block['length']))
-        print('TEST')
         db_put(block['length'], block, DB)
         stackDB.set_length(block['length'])
         stackDB.reset_txs()
@@ -177,9 +169,9 @@ def add_block(block, DB):
             stackDB.set_hash(tools.det_hash(0))
         for tx in block['txs']:
             transactions.update[tx['type']](tx, DB)
-        print('finished adding block')
     else:
-        print('FAILED TO ADD BLOCK')
+        pass
+        #print('FAILED TO ADD BLOCK')
 def delete_block(DB):
     print('DELETE BLOCK')
     length=stackDB.current_length()

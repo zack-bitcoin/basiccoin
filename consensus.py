@@ -58,7 +58,7 @@ def peers_check(peers, DB):
             length=stackDB.current_length()
             block=blockchain.db_get(length, DB)
             recent_hash=tools.det_hash(block)
-            print('newblocks: ' +str(newblocks))
+            #            print('newblocks: ' +str(newblocks))
             return tools.det_hash(sorted(newblocks, key=lambda x: x['length'])[-1])!=recent_hash
         except:
             return False
@@ -72,11 +72,11 @@ def peers_check(peers, DB):
         length=stackDB.current_length()
         ahead=int(block_count['length'])-length
         if ahead < 0:#if we are ahead of them
-            print('length: ' +str(int(block_count['length'])+1))
+            #print('length: ' +str(int(block_count['length'])+1))
             cmd({'type':'pushblock', 'block':blockchain.db_get(block_count['length']+1, DB)})
             return []
         if ahead == 0:#if we are on the same block, ask for any new txs
-            print('ON SAME BLOCK')
+            #print('ON SAME BLOCK')
             block=blockchain.db_get(length, DB)
             if 'recent_hash' in block_count and tools.det_hash(block)!=block_count['recent_hash']:
                 blockchain.delete_block()
@@ -89,7 +89,7 @@ def peers_check(peers, DB):
                 #blockchain.add_tx(tx)
             pushers=[x for x in my_txs if x not in txs]
             for push in pushers:
-                cmd({'type':'pushtx', 'tx':tx})
+                cmd({'type':'pushtx', 'tx':push})
             return []
         start=length-30
         if start<0:
@@ -103,18 +103,14 @@ def peers_check(peers, DB):
         if type(blocks)!=type([1,2]):
             return []
         times=3
-        print('BEFORE FORK CHECK')
         while fork_check(blocks, DB) and times>0:
-            print("IN FORK CHECK")
             times-=1
             blockchain.delete_block(DB)
         for block in blocks:
-            print('hopefully blocks are coming in order')
+            #print('hopefully blocks are coming in order')
             stackDB.push('suggested_blocks.db', block)
             #blockchain.add_block(block)
-    print('peer_check: '+str(peers))
     for peer in peers:
-        print('peer: ' +str(peer))
         peer_check(peer, DB)
 def suggestions(DB):
     def file_map(func, file):
@@ -125,7 +121,6 @@ def suggestions(DB):
 def mainloop(reward_address, peers, hashes_till_check, DB):
     while True:
 #    for i in range(5):coun
-        print('CONSENSUS')
         mine(hashes_till_check, reward_address, DB) 
         peers_check(peers, DB)
         suggestions(DB)

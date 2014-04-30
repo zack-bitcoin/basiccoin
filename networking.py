@@ -15,12 +15,6 @@ def kill_processes_using_ports(ports):
             pid = match.group('pid')
             subprocess.Popen(['kill', '-9', pid])
 def serve_forever(message_handler_func, PORT, queue):
-    try:
-        #only works in linux
-        kill_processes_using_ports([str(PORT)])
-        time.sleep(1)
-    except:
-        pass
     server = socket.socket()
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server.bind(('127.0.0.1', PORT))
@@ -43,7 +37,7 @@ def connect(msg, host, port):
         msg['version']=custom.version
         s.send(tools.package(msg))
         response = s.recv(MAX_MESSAGE_SIZE)
-        print(response)
+        #print(response)
         return tools.unpackage(response)
     except Exception as e:
         print('THE ERROR WAS: ' +str(e))

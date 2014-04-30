@@ -27,6 +27,7 @@ def main(dic, DB):
         out=[]
         counter=0
         while len(tools.package(out))<50000 and ran[0]+counter<=ran[1]:
+            #print(ran[0]+counter)
             block=blockchain.db_get(ran[0]+counter, DB)
             if 'length' in block:
                 out.append(block)
@@ -48,6 +49,9 @@ def main(dic, DB):
     check=security_check(dic)
     if not check['bool']:
         return check
-    return funcs[dic['type']](check['newdic'], DB)
+    try:
+        return funcs[dic['type']](check['newdic'], DB)
+    except:
+        print('LISTENER ERROR. CONTINUING')
 def server(DB): return networking.serve_forever(main, custom.listen_port, DB)
 
