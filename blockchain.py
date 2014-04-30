@@ -2,18 +2,18 @@ import time, copy, custom, tools, stackDB, networking, transactions
 #this file explains how we talk to the database. It explains the rules for adding blocks and transactions.
 def db_get (n, DB): 
     try:
-        a=DB.Get(str(n))
+        a=DB['db'].Get(str(n))
     except:
         error('here')
     return tools.unpackage(a)
-def db_put(key, dic, DB):  return DB.Put(str(key), tools.package(dic))
-def db_delete(key, DB): return DB.Delete(str(key))
+def db_put(key, dic, DB):  return DB['db'].Put(str(key), tools.package(dic))
+def db_delete(key, DB): return DB['db'].Delete(str(key))
 def count(pubkey, DB):
     c=0
     try:
-        txs=stackDB.current_txs()
+        txs=DB['txs']
     except:
-        stackDB.reset_txs()
+        DB['txs']=[]
         txs=[]
     for t in txs:
         if pubkey==t['id']:
@@ -30,7 +30,6 @@ def count(pubkey, DB):
 def add_tx(tx, DB):
     def verify_count(tx, txs): return tx['count']==count(tx['id'], DB)
     def verify_tx(tx, txs):
-        #boolean={'spend':spend_verify, 'mint':mint_verify}
         boolean=transactions.tx_check
         if type(tx) != type({'a':1}) or 'type' not in tx:
             print('type error')
@@ -49,13 +48,11 @@ def add_tx(tx, DB):
             print('maxed out zeroth confirmation txs')
             return False
         return boolean[tx['type']](tx, txs, DB)
-    txs=stackDB.current_txs()
+    txs=DB['txs']
     if verify_tx(tx, txs):
-        stackDB.add_tx(tx)
-        return True
+        DB['txs'].append(tx)
     else:
         print('tx did not get added')
-        return False
 targets={}
 times={}#stores blocktimes
 def recent_blockthings(key, DB, size=100, length=0):
@@ -67,7 +64,7 @@ def recent_blockthings(key, DB, size=100, length=0):
         if not leng in storage:
             storage[leng]=db_get(leng, DB)[key]
         return storage[leng]
-    if length==0: length=stackDB.current_length()
+    if length==0: length=DB['length']
     f=lambda x: [get_val(y) for y in x]
     try:
         return f(range(length-size, length))
@@ -121,8 +118,8 @@ def target(DB, length=0):
         w=weights(inflection, len(data))
         tw=sum(w)
         return sum([w[i]*data[i]/tw for i in range(len(data))])
-    if length==0 or length==stackDB.current_length()+1: 
-        length=stackDB.current_length()+1
+    if length==0 or length==DB['length']+1:#stackDB.current_length()+1: 
+        length=DB['length']#stackDB.current_length()+1
     else:#we calculated this before
         return targets[str(length)]
     if length<3:
@@ -137,21 +134,21 @@ def add_block(block, DB):
         return sorted(mylist)[len(mylist) / 2]
     def block_check(block, DB):
         earliest=median(recent_blockthings('time', DB))
-        length=stackDB.current_length()
+        length=DB['length']#stackDB.current_length()
         if 'error' in block.keys(): return False
         if type(block)!=type({'a':1}):
             print('34')
             return False
         if int(block['length'])!=int(length)+1: 
-            #print(block['length'])
-            #print(length)
             print('12')
             return False
         if length >=0 and tools.det_hash(db_get(length, DB))!=block['prevHash']: 
             print('22')
             return False
-        if u'target' not in block.keys() or tools.det_hash(block)>block['target'] or block['target']!=target(DB, block['length']):
-            #print('11')
+        a=copy.deepcopy(block)
+        a.pop('nonce')
+        if u'target' not in block.keys() or tools.det_hash({u'nonce':block['nonce'], u'halfHash':tools.det_hash(a)})>block['target'] or block['target']!=target(DB, block['length']): 
+            print('11')
             return False
         if 'time' not in block or block['time']>time.time() or block['time']<earliest:
             print('2323')
@@ -159,40 +156,34 @@ def add_block(block, DB):
         return True
     if block_check(block, DB):
         print('add_block: '+str(block))
-#        print('add_block: '+str(block['time'])+ " length: " + str(block['length']))
         db_put(block['length'], block, DB)
-        stackDB.set_length(block['length'])
-        stackDB.reset_txs()
+        DB['length']=block['length']
+        DB['txs']=[]
         try:
-            stackDB.set_hash(tools.det_hash(db_get(block['length']-1, DB)))
+            DB['recentHash']=tools.det_hash(db_get(block['length']-1, DB))
         except:
-            stackDB.set_hash(tools.det_hash(0))
+            lenth=DB['length']
         for tx in block['txs']:
             transactions.update[tx['type']](tx, DB)
-    else:
-        pass
-        #print('FAILED TO ADD BLOCK')
 def delete_block(DB):
-    print('DELETE BLOCK')
-    length=stackDB.current_length()
-    if length<0: return
+    if DB['length']<0: return
     try:
         targets.pop(str(length))
         times.pop(str(length))
     except:
         pass
-    block=db_get(length, DB)
-    orphans=stackDB.current_txs()
-    stackDB.reset_txs()
-    stackDB.set_length(length-1)
+    block=db_get(DB['length'], DB)
+    orphans=DB['txs']
+    DB['txs']=[]
     try:
-        stackDB.set_hash(tools.det_hash(db_get(length-1, DB)))
+        DB['recentHash']=tools.det_hash(db_get(DB['length'], DB))
     except:
         pass
     for tx in block['txs']:
         orphans.append(tx)
         transactions.downdate[tx['type']](tx, DB)
-    db_delete(length, DB)
+    db_delete(DB['length'], DB)
+    DB['length']-=1
     for orphan in sorted(orphans, key=lambda x: x['count']):
         add_tx(tx, DB)
 

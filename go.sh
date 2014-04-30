@@ -9,3 +9,4 @@ cd ../user4
 python threads.py &
 cd ../user5
 python threads.py
+
