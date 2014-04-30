@@ -2,7 +2,7 @@ basiccoin
 
 The simplest currency that I can make. I wrote about each file at the top.
 
-To run 5 nodes: ./test.sh
+To run 5 nodes: ./go.sh
 
 Then send your browser to 
   http://localhost:8701
