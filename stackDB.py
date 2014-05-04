@@ -15,4 +15,3 @@ def push(file, x):#keep
     with open(file, 'a') as myfile:
         myfile.write(json.dumps(x)+'\n')
 def reset(file): return open(file, 'w').close()#keep
-

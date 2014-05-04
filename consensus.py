@@ -30,13 +30,10 @@ def mine(hashes_till_check, reward_address, DB):
             if count>hashes:
                 return {'error':False}
             ''' for testing sudden loss in hashpower from miners.
-            if block[u'length']>150:# and block[u'nonce']%10==0:
-                time.sleep(0.1)
-            else:
-                time.sleep(0.01)
+            if block[u'length']>150:# and block[u'nonce']%10==0: time.sleep(0.1)
+            else: time.sleep(0.01)
             '''
         return block
-        #try to mine a block that many times. add it to the database if we find one.
     length=DB['length']
     if length==-1:
         print('making a genesis block')
@@ -48,7 +45,6 @@ def mine(hashes_till_check, reward_address, DB):
         block=make_block(prev_block, txs, reward_address, DB)
     block=POW(block, hashes_till_check, blockchain.target(DB, block['length']))
     stackDB.push('suggested_blocks.db', block)
-
 def peers_check(peers, DB):
     def fork_check(newblocks, DB):
         #looks at some blocks obtained from a peer. If we are on a different fork than the partner, this returns True. If we are on the same fork as the peer, then this returns False.
@@ -72,7 +68,6 @@ def peers_check(peers, DB):
             cmd({'type':'pushblock', 'block':blockchain.db_get(block_count['length']+1, DB)})
             return []
         if ahead == 0:#if we are on the same block, ask for any new txs
-            #print('ON SAME BLOCK')
             block=blockchain.db_get(length, DB)
             if 'recent_hash' in block_count and tools.det_hash(block)!=block_count['recent_hash']:
                 blockchain.delete_block()
@@ -113,7 +108,6 @@ def suggestions(DB):
     map(file_map, [blockchain.add_tx, blockchain.add_block], ['suggested_txs.db', 'suggested_blocks.db'])
     stackDB.reset('suggested_blocks.db')
     stackDB.reset('suggested_txs.db')
-
 def mainloop(reward_address, peers, hashes_till_check, DB):
     while True:
         print('DB: ' +str(DB))

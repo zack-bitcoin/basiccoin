@@ -71,8 +71,6 @@ def recent_blockthings(key, DB, size=100, length=0):
     except:
         return f(range(0, length))
 def target(DB, length=0):
-#    def detensify(frac, m): return (frac/m+(m-1.0)/m) #brings frac closer to the value 1 by a factor of m
-#    inflection=0.977159968#This constant is selected such that the 30 most recent blocks count for 1/2 the total weight.
     inflection=0.985#This constant is selected such that the 50 most recent blocks count for 1/2 the total weight.
     def buffer(str):
         if len(str)<64: return buffer('0'+str)
@@ -128,13 +126,12 @@ def target(DB, length=0):
     f=estimate_target(DB)
     return multiply_blocktime(f, e/custom.blocktime(length))
 def add_block(block, DB):
-    #we should update sig_length
     def median(mylist): #median is good for weeding out liars, so long as the liars don't have 51% hashpower.
         if len(mylist)<1: return 0
         return sorted(mylist)[len(mylist) / 2]
     def block_check(block, DB):
         earliest=median(recent_blockthings('time', DB))
-        length=DB['length']#stackDB.current_length()
+        length=DB['length']
         if 'error' in block.keys(): return False
         if type(block)!=type({'a':1}):
             print('34')
@@ -186,4 +183,3 @@ def delete_block(DB):
     DB['length']-=1
     for orphan in sorted(orphans, key=lambda x: x['count']):
         add_tx(tx, DB)
-
