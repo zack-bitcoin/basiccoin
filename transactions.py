@@ -1,5 +1,4 @@
-import blockchain, custom, copy, tools
-import pybitcointools as pt
+import blockchain, custom, copy, tools, pt
 #This file explains how we tell if a transaction is valid or not, it explains how we update the system when new transactions are added to the blockchain.
 def spend_verify(tx, txs, DB): 
     tx_copy=copy.copy(tx)

@@ -1,7 +1,6 @@
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
-import string, cgi, time, networking, stackDB, copy, tools #json, random, copy, pickle, os, config
+import string, cgi, time, networking, stackDB, copy, tools, pt
 import blockchain, custom
-import pybitcointools as pt
 def spend(amount, pubkey, privkey, to_pubkey, DB):
     amount=int(amount*(10**5))
     tx={'type':'spend', 'id':pubkey, 'amount':amount, 'to':to_pubkey}
