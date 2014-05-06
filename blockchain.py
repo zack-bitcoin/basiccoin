@@ -68,11 +68,11 @@ def target(DB, length=0):
     def buffer(str):
         if len(str)<64: return buffer('0'+str)
         return str
-    def hexTimesFloat(target, number): return buffer(str(hex(int(int(target, 16)*number)))[2:-1])
+    def targetTimesFloat(target, number): return buffer(str(hex(int(int(target, 16)*number)))[2:-1])
     def weights(length): return [inflection**(length-i) for i in range(length)]
     def estimate_target(DB):
-        def invert(n): return buffer(str(hex(int('f'*128, 16)/int(n, 16)))[2:-1])#use double-size for division, to reduce information leakage.
-        def accumulate(l):
+        def invertTarget(n): return buffer(str(hex(int('f'*128, 16)/int(n, 16)))[2:-1])#use double-size for division, to reduce information leakage.
+        def sumTargets(l):
             def plus(a, b): return buffer(str(hex(int(a, 16)+int(b, 16)))[2:-1])
             if len(l)<1: return 0
             while len(l)>1:
@@ -81,16 +81,16 @@ def target(DB, length=0):
         targets=recent_blockthings('target', DB, history_length)        
         w=weights(len(targets))
         tw=sum(w)
-        targets=map(invert, targets)#invert because target is proportional to 1/(# hashes required to mine a block on average)
-        weighted_targets=[multiply_blocktime(targets[i], w[i]/tw) for i in range(len(targets))]
-        return invert(accumulate(weighted_targets))#invert again to fix units
+        targets=map(invertTarget, targets)#invert because target is proportional to 1/(# hashes required to mine a block on average)
+        weighted_targets=[targetTimesFloat(targets[i], w[i]/tw) for i in range(len(targets))]
+        return invertTarget(sumTargets(weighted_targets))#invert again to fix units
     def estimate_time(DB):
         timestamps=recent_blockthings('time', DB, history_length)
+        blocklengths=[timestamps[i]-timestamps[i-1] for i in range(1, len(timestamps))]
         w=weights(len(blocklengths))#geometric weighting
         tw=sum(w)#normalization constant
-        blocklengths=[timestamps[i]-timestamps[i-1] for i in range(1, len(timestamps))]
         return sum([w[i]*blocklengths[i]/tw for i in range(len(blocklengths))])
-    return hexTimesFloat(estimate_target(DB), estimate_time(DB)/custom.blocktime(length))
+    return targetTimesFloat(estimate_target(DB), estimate_time(DB)/custom.blocktime(length))
 def add_block(block, DB):
     def median(mylist): #median is good for weeding out liars, so long as the liars don't have 51% hashpower.
         if len(mylist)<1: return 0
