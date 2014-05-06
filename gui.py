@@ -51,7 +51,7 @@ def home(dic, DB):
         if dic['do']=='spend':
             spend(float(dic['amount']), pubkey, privkey, dic['to'], DB)
     out=empty_page
-    out=out.format('<p>your address is: ' +str(pubkey)+'</p>{}')
+    out=out.format('<p>your address is: ' +str(tools.pub2addr(pubkey))+'</p>{}')
     out=out.format('<p>current block is: ' +str(DB['length'])+'</p>{}')
     try:
         balance=blockchain.db_get(pubkey, DB)

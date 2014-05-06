@@ -1,12 +1,15 @@
 import time, copy, custom, tools, stackDB, networking, transactions
 #this file explains how we talk to the database. It explains the rules for adding blocks and transactions.
 def db_get (n, DB): 
+    if type(n) in [type('str'), type(u'uni')] and len(n)==130: n=tools.pub2addr(n)
     try:
         a=DB['db'].Get(str(n))
     except:
         error('here')
     return tools.unpackage(a)
-def db_put(key, dic, DB):  return DB['db'].Put(str(key), tools.package(dic))
+def db_put(key, dic, DB):  
+    if type(key) in [type('str'), type(u'uni')] and len(key)==130: key=tools.pub2addr(key)
+    return DB['db'].Put(str(key), tools.package(dic))
 def db_delete(key, DB): return DB['db'].Delete(str(key))
 def count(pubkey, DB):
     c=0
@@ -155,6 +158,7 @@ def add_block(block, DB):
         print('add_block: '+str(block))
         db_put(block['length'], block, DB)
         DB['length']=block['length']
+        orphans=DB['txs']
         DB['txs']=[]
         try:
             DB['recentHash']=tools.det_hash(db_get(block['length']-1, DB))
@@ -162,6 +166,8 @@ def add_block(block, DB):
             lenth=DB['length']
         for tx in block['txs']:
             transactions.update[tx['type']](tx, DB)
+        for tx in orphans:
+            add_tx(tx, DB)
 def delete_block(DB):
     if DB['length']<0: return
     try:
