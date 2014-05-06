@@ -1,4 +1,4 @@
-import blockchain, custom, tools, networking, stackDB, random, time
+import blockchain, custom, tools, networking, stackDB, random, time, copy
 #This file mines blocks and talks to peers. It maintains consensus of the blockchain.
 def mine(hashes_till_check, reward_address, DB):
     def make_mint(pubkey, DB): return {'type':'mint', 'id':pubkey, 'count':blockchain.count(pubkey, DB)}
@@ -16,7 +16,7 @@ def mine(hashes_till_check, reward_address, DB):
              'txs':txs+[make_mint(pubkey, DB)],
              'length':leng,
              'time':time.time(),
-             'target':blockchain.target(DB),
+             'target':blockchain.target(DB, leng),
              'prevHash':tools.det_hash(prev_block)}
         out=tools.unpackage(tools.package(out))
         return out
@@ -34,7 +34,7 @@ def mine(hashes_till_check, reward_address, DB):
             else: time.sleep(0.01)
             '''
         return block
-    length=DB['length']
+    length=copy.deepcopy(DB['length'])
     if length==-1:
         block=genesis(reward_address, DB)
         txs=[]
@@ -48,7 +48,7 @@ def peers_check(peers, DB):
     def fork_check(newblocks, DB):
         #if we are on a fork, return True
         try:
-            length=DB['length']
+            length=copy.deepcopy(DB['length'])
             block=blockchain.db_get(length, DB)
             recent_hash=tools.det_hash(block)
             return recent_hash not in map(tools.det_hash, newblocks)
@@ -62,7 +62,7 @@ def peers_check(peers, DB):
             return 
         if 'error' in block_count.keys():
             return         
-        length=DB['length']
+        length=copy.deepcopy(DB['length'])
         ahead=int(block_count['length'])-length
         if ahead < 0:#if we are ahead of them
             cmd({'type':'pushblock', 'block':blockchain.db_get(block_count['length']+1, DB)})

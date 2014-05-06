@@ -1,35 +1,41 @@
 import time, copy, custom, tools, stackDB, networking, transactions
 #this file explains how we talk to the database. It explains the rules for adding blocks and transactions.
 def db_get (n, DB): 
-    if type(n) in [type('str'), type(u'uni')] and len(n)==130: n=tools.pub2addr(n)
+    n=str(n)
+    if len(n)==130: n=tools.pub2addr(n)
     try:
-        a=DB['db'].Get(str(n))
+        a=DB['db'].Get(n)
     except:
         error('here')
     return tools.unpackage(a)
 def db_put(key, dic, DB):  
-    if type(key) in [type('str'), type(u'uni')] and len(key)==130: key=tools.pub2addr(key)
-    return DB['db'].Put(str(key), tools.package(dic))
+    key=str(key)
+    if len(key)==130: key=tools.pub2addr(key)
+    return DB['db'].Put(key, tools.package(dic))
 def db_delete(key, DB): return DB['db'].Delete(str(key))
 def count(pubkey, DB):
-    c=0
-    try:
-        txs=DB['txs']
-    except:
-        DB['txs']=[]
-        txs=[]
-    for t in txs:
-        if pubkey==t['id']:
-            c+=1
-    try:
-        acc=db_get(pubkey, DB)
-    except:
-        acc={'count':0, 'amount':0}
-        db_put(pubkey, acc, DB)
-    if 'count' not in acc:
-        acc['count']=0
-        db_put(pubkey, acc, DB)
-    return acc['count']+c
+    def zeroth_confirmation_txs(pubkey, DB):
+        c=0
+        try:
+            txs=DB['txs']
+        except:
+            DB['txs']=[]
+            return 0
+        for t in txs:
+            if pubkey==t['id']:
+                c+=1
+        return c
+    def current(pubkey, DB):
+        try:
+            acc=db_get(pubkey, DB)
+        except:
+            acc={'count':0, 'amount':0}
+            db_put(pubkey, acc, DB)
+        if 'count' not in acc:
+            acc['count']=0
+            db_put(pubkey, acc, DB)
+        return acc['count']
+    return current(pubkey, DB)+zeroth_confirmation_txs(pubkey, DB)
 def add_tx(tx, DB):
     def verify_count(tx, txs): return tx['count']==count(tx['id'], DB)
     def verify_tx(tx, txs):
@@ -56,7 +62,7 @@ def recent_blockthings(key, DB, size=100, length=0):
         if not leng in storage:
             storage[leng]=db_get(leng, DB)[key]
         return storage[leng]
-    if length==0: length=DB['length']
+    if length==0: length=copy.deepcopy(DB['length'])
     f=lambda x: [get_val(y) for y in x]
     try:
         return f(range(length-size, length))
@@ -108,22 +114,17 @@ def target(DB, length=0):
         w=weights(inflection, len(data))
         tw=sum(w)
         return sum([w[i]*data[i]/tw for i in range(len(data))])
-    if length==0 or length==DB['length']+1:#stackDB.current_length()+1: 
-        length=DB['length']#stackDB.current_length()+1
-    else:#we calculated this before
-        return targets[str(length)]
-    if length<3:
-        return buffer('f'*61)
-    e=estimate_time(DB)
-    f=estimate_target(DB)
-    return multiply_blocktime(f, e/custom.blocktime(length))
+    if length==0: length=DB['length']
+    if length<4: return buffer('f'*60)
+    if length<=DB['length']: return targets[str(length)]
+    return multiply_blocktime(estimate_target(DB), estimate_time(DB)/custom.blocktime(length))
 def add_block(block, DB):
     def median(mylist): #median is good for weeding out liars, so long as the liars don't have 51% hashpower.
         if len(mylist)<1: return 0
         return sorted(mylist)[len(mylist) / 2]
     def block_check(block, DB):
         earliest=median(recent_blockthings('time', DB))
-        length=DB['length']
+        length=copy.deepcopy(DB['length'])
         if 'error' in block.keys(): return False
         if type(block)!=type({'a':1}): return False
         if int(block['length'])!=int(length)+1: return False
@@ -139,7 +140,6 @@ def add_block(block, DB):
         DB['length']=block['length']
         orphans=DB['txs']
         DB['txs']=[]
-        #DB['recent_hash']=tools.det_hash(db_get(block['length']-1, DB))
         for tx in block['txs']:
             transactions.update[tx['type']](tx, DB)
         for tx in orphans:
@@ -154,10 +154,6 @@ def delete_block(DB):
     block=db_get(DB['length'], DB)
     orphans=DB['txs']
     DB['txs']=[]
-    #try:
-    #    DB['recentHash']=tools.det_hash(db_get(DB['length'], DB))
-    #except:
-    #pass
     for tx in block['txs']:
         orphans.append(tx)
         transactions.downdate[tx['type']](tx, DB)
