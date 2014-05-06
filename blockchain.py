@@ -34,28 +34,17 @@ def add_tx(tx, DB):
     def verify_count(tx, txs): return tx['count']==count(tx['id'], DB)
     def verify_tx(tx, txs):
         boolean=transactions.tx_check
-        if type(tx) != type({'a':1}) or 'type' not in tx:
-            print('type error')
-            return False
-        if tx['type'] not in boolean.keys(): 
-            print('caps')
-            return False
-        if not verify_count(tx, txs): 
-            print('tx: ' +str(tx))#1
-            print(count(tx['id'], DB))#4
-            print('abc')
-            return False
-        if len(tools.package(txs+[tx]))>networking.MAX_MESSAGE_SIZE-5000:
-            #change 5000 a number bigger than the size of the rest of the bloc
-            #maybe 5000 not needed, if block and txs are sent as different messages.
-            print('maxed out zeroth confirmation txs')
-            return False
+        if type(tx) != type({'a':1}) or 'type' not in tx: return False
+        if tx['type'] not in boolean.keys(): return False
+        if not verify_count(tx, txs): return False
+        if len(tools.package(txs+[tx]))>networking.MAX_MESSAGE_SIZE-5000: return False
         return boolean[tx['type']](tx, txs, DB)
     txs=DB['txs']
     if verify_tx(tx, txs):
         DB['txs'].append(tx)
     else:
-        print('tx did not get added')
+        pass
+        #print('tx did not get added')
 targets={}
 times={}#stores blocktimes
 def recent_blockthings(key, DB, size=100, length=0):
@@ -136,23 +125,13 @@ def add_block(block, DB):
         earliest=median(recent_blockthings('time', DB))
         length=DB['length']
         if 'error' in block.keys(): return False
-        if type(block)!=type({'a':1}):
-            print('34')
-            return False
-        if int(block['length'])!=int(length)+1: 
-            print('12')
-            return False
-        if length >=0 and tools.det_hash(db_get(length, DB))!=block['prevHash']: 
-            print('22')
-            return False
+        if type(block)!=type({'a':1}): return False
+        if int(block['length'])!=int(length)+1: return False
+        if length >=0 and tools.det_hash(db_get(length, DB))!=block['prevHash']: return False
         a=copy.deepcopy(block)
         a.pop('nonce')
-        if u'target' not in block.keys() or tools.det_hash({u'nonce':block['nonce'], u'halfHash':tools.det_hash(a)})>block['target'] or block['target']!=target(DB, block['length']): 
-            print('11')
-            return False
-        if 'time' not in block or block['time']>time.time() or block['time']<earliest:
-            print('2323')
-            return False
+        if u'target' not in block.keys() or tools.det_hash({u'nonce':block['nonce'], u'halfHash':tools.det_hash(a)})>block['target'] or block['target']!=target(DB, block['length']): return False
+        if 'time' not in block or block['time']>time.time() or block['time']<earliest: return False
         return True
     if block_check(block, DB):
         print('add_block: '+str(block))
@@ -160,10 +139,7 @@ def add_block(block, DB):
         DB['length']=block['length']
         orphans=DB['txs']
         DB['txs']=[]
-        try:
-            DB['recentHash']=tools.det_hash(db_get(block['length']-1, DB))
-        except:
-            lenth=DB['length']
+        #DB['recent_hash']=tools.det_hash(db_get(block['length']-1, DB))
         for tx in block['txs']:
             transactions.update[tx['type']](tx, DB)
         for tx in orphans:
@@ -178,10 +154,10 @@ def delete_block(DB):
     block=db_get(DB['length'], DB)
     orphans=DB['txs']
     DB['txs']=[]
-    try:
-        DB['recentHash']=tools.det_hash(db_get(DB['length'], DB))
-    except:
-        pass
+    #try:
+    #    DB['recentHash']=tools.det_hash(db_get(DB['length'], DB))
+    #except:
+    #pass
     for tx in block['txs']:
         orphans.append(tx)
         transactions.downdate[tx['type']](tx, DB)

@@ -8,7 +8,6 @@ def spend_verify(tx, txs, DB):
     if int(blockchain.db_get(tx['id'], DB)['amount'])<int(tx['amount']): return False
     return True
 def mint_verify(tx, txs, DB):
-    print('MINT CHECK')
     for t in txs: 
         if t['type']=='mint': return False 
     return True

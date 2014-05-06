@@ -104,21 +104,21 @@ class MyHandler(BaseHTTPRequestHandler):
          print e
          self.send_error(404,'File Not Found: %s' % self.path)
    def do_POST(self):
-            print("path: " + str(self.path))
-            ctype, pdict = cgi.parse_header(self.headers.getheader('content-type'))    
-            print(ctype)
-            if ctype == 'multipart/form-data' or ctype=='application/x-www-form-urlencoded':    
-               fs = cgi.FieldStorage( fp = self.rfile,
-                                      headers = self.headers, # headers_,
-                                      environ={ 'REQUEST_METHOD':'POST' })
-            else: raise Exception("Unexpected POST request")
-            self.send_response(200)
-            self.end_headers()
-            dic=fs2dic(fs)
-            if self.path=='/home':
-                self.wfile.write(home(dic, DB))
-            else:
-                print('ERROR: path {} is not programmed'.format(str(self.path)))
+       print("path: " + str(self.path))
+       ctype, pdict = cgi.parse_header(self.headers.getheader('content-type'))    
+       print(ctype)
+       if ctype == 'multipart/form-data' or ctype=='application/x-www-form-urlencoded':    
+           fs = cgi.FieldStorage( fp = self.rfile,
+                                  headers = self.headers, # headers_,
+                                  environ={ 'REQUEST_METHOD':'POST' })
+       else: raise Exception("Unexpected POST request")
+       self.send_response(200)
+       self.end_headers()
+       dic=fs2dic(fs)
+       if self.path=='/home':
+           self.wfile.write(home(dic, DB))
+       else:
+           print('ERROR: path {} is not programmed'.format(str(self.path)))
 default_brain=''#so that you don't have to type it in every time.
 def main(PORT, brain_wallet, db):
     global default_brain

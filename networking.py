@@ -40,7 +40,7 @@ def connect(msg, host, port):
         #print(response)
         return tools.unpackage(response)
     except Exception as e:
-        print('THE ERROR WAS: ' +str(e))
-        print('disconnect')
+        #print('THE ERROR WAS: ' +str(e))
+        #print('disconnect')
         return {'error':'error'}
 def send_command(peer, msg): return connect(msg, peer[0], peer[1])

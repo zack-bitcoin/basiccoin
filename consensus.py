@@ -36,7 +36,6 @@ def mine(hashes_till_check, reward_address, DB):
         return block
     length=DB['length']
     if length==-1:
-        print('making a genesis block')
         block=genesis(reward_address, DB)
         txs=[]
     else:
@@ -47,13 +46,14 @@ def mine(hashes_till_check, reward_address, DB):
     stackDB.push('suggested_blocks.db', block)
 def peers_check(peers, DB):
     def fork_check(newblocks, DB):
-        #looks at some blocks obtained from a peer. If we are on a different fork than the partner, this returns True. If we are on the same fork as the peer, then this returns False.
+        #if we are on a fork, return True
         try:
             length=DB['length']
             block=blockchain.db_get(length, DB)
             recent_hash=tools.det_hash(block)
-            return tools.det_hash(sorted(newblocks, key=lambda x: x['length'])[-1])!=recent_hash
-        except:
+            return recent_hash not in map(tools.det_hash, newblocks)
+        except Exception as e:
+            #print('ERROR: ' +str(e))
             return False
     def peer_check(peer, DB):
         cmd=(lambda x: networking.send_command(peer, x))
@@ -71,7 +71,7 @@ def peers_check(peers, DB):
             block=blockchain.db_get(length, DB)
             if 'recent_hash' in block_count and tools.det_hash(block)!=block_count['recent_hash']:
                 blockchain.delete_block()
-                print('WE WERE ON A FORK. time to back up.')
+                #print('WE WERE ON A FORK. time to back up.')
                 return []
             my_txs=DB['txs']
             txs=cmd({'type':'txs'})
@@ -92,7 +92,7 @@ def peers_check(peers, DB):
                      'range':[start, end]})
         if type(blocks)!=type([1,2]):
             return []
-        times=3
+        times=2
         while fork_check(blocks, DB) and times>0:
             times-=1
             blockchain.delete_block(DB)
@@ -110,8 +110,6 @@ def suggestions(DB):
     stackDB.reset('suggested_txs.db')
 def mainloop(reward_address, peers, hashes_till_check, DB):
     while True:
-        print('DB: ' +str(DB))
-        print('me: ' +str(custom.brainwallet))
         mine(hashes_till_check, reward_address, DB) 
         peers_check(peers, DB)
         suggestions(DB)
