@@ -37,87 +37,60 @@ def count(pubkey, DB):
         return acc['count']
     return current(pubkey, DB)+zeroth_confirmation_txs(pubkey, DB)
 def add_tx(tx, DB):
-    def verify_count(tx, txs): return tx['count']==count(tx['id'], DB)
+    tx_check=transactions.tx_check
+    def verify_count(tx, txs): return tx['count']!=count(tx['id'], DB)
+    def type_check(tx, txs): return type(tx) != type({'a':1}) or 'type' not in tx or tx['type'] not in tx_check
+    def too_big_block(tx, txs): return len(tools.package(txs+[tx]))>networking.MAX_MESSAGE_SIZE-5000
     def verify_tx(tx, txs):
-        boolean=transactions.tx_check
-        if type(tx) != type({'a':1}) or 'type' not in tx: return False
-        if tx['type'] not in boolean.keys(): return False
-        if not verify_count(tx, txs): return False
-        if len(tools.package(txs+[tx]))>networking.MAX_MESSAGE_SIZE-5000: return False
-        return boolean[tx['type']](tx, txs, DB)
-    txs=DB['txs']
-    if verify_tx(tx, txs):
-        DB['txs'].append(tx)
-    else:
-        pass
-        #print('tx did not get added')
+        if type_check(tx, txs): return False
+        if verify_count(tx, txs): return False
+        if too_big_block(tx, txs): return False
+        return tx_check[tx['type']](tx, txs, DB)
+    if verify_tx(tx, DB['txs']): DB['txs'].append(tx)
 targets={}
 times={}#stores blocktimes
 def recent_blockthings(key, DB, size=100, length=0):
-    storage={}
     if key=='time': storage=times
     if key=='target': storage=targets
     def get_val(length):
         leng=str(length)
-        if not leng in storage:
-            storage[leng]=db_get(leng, DB)[key]
+        if not leng in storage: storage[leng]=db_get(leng, DB)[key]
         return storage[leng]
-    if length==0: length=copy.deepcopy(DB['length'])
-    f=lambda x: [get_val(y) for y in x]
-    try:
-        return f(range(length-size, length))
-    except:
-        return f(range(0, length))
+    if length==0: length=DB['length']
+    start= (length-size) if (length-size)>=0 else 0
+    return map(get_val, range(start, length))
 def target(DB, length=0):
     inflection=0.985#This constant is selected such that the 50 most recent blocks count for 1/2 the total weight.
+    history_length=400#How far back in history do we compute the target from.
+    if length==0: length=DB['length']
+    if length<4: return '0'*4+'f'*60#use same difficulty for first few blocks.
+    if length<=DB['length']: return targets[str(length)]#don't calculate same difficulty twice.
     def buffer(str):
         if len(str)<64: return buffer('0'+str)
         return str
-    def multiply_blocktime(target, number): 
-        try:
-            return buffer(str(hex(int(int(target, 16)*number)))[2:-1])
-        except:
-            return buffer('f'*62)
-    def weights(inflection, length):
-        out=[]
-        for i in range(length):#weigh blocktimes against geometric distribution
-            out.append(inflection**(length-i)) #b/c we care more about the recent blocks 
-        return out
+    def hexTimesFloat(target, number): return buffer(str(hex(int(int(target, 16)*number)))[2:-1])
+    def weights(length): return [inflection**(length-i) for i in range(length)]
     def estimate_target(DB):
-        def invert(n):
-            try:
-                return buffer(str(hex(int('f'*128, 16)/int(n, 16)))[2:-1])#use double-size for division, to reduce information leakage.
-            except:
-                return buffer('f'*62)
-        def plus(a, b):
-            return buffer(str(hex(int(a, 16)+int(b, 16)))[2:-1])
-        def acc(func, l):
+        def invert(n): return buffer(str(hex(int('f'*128, 16)/int(n, 16)))[2:-1])#use double-size for division, to reduce information leakage.
+        def accumulate(l):
+            def plus(a, b): return buffer(str(hex(int(a, 16)+int(b, 16)))[2:-1])
             if len(l)<1: return 0
             while len(l)>1:
-                l=[func(l[0], l[1])]+l[2:]
+                l=[plus(l[0], l[1])]+l[2:]
             return l[0]
-        targets=recent_blockthings('target', DB, 400)        
-        for i in range(len(targets)):
-            targets[i]=invert(targets[i])#invert because target is proportional to 1/(# hashes required to mine a block on average)
-        w=weights(inflection, len(targets))
-        total_weight=sum(w)
-        weighted_targets=[multiply_blocktime(targets[i], w[i]/total_weight) for i in range(len(targets))]
-        return invert(acc(plus, weighted_targets))
-    def estimate_time(DB):
-        data=[]
-        for x in recent_blockthings('time', DB, 400):
-            try:
-                data.append(x-prev_x)
-            except:
-                pass
-            prev_x=x
-        w=weights(inflection, len(data))
+        targets=recent_blockthings('target', DB, history_length)        
+        w=weights(len(targets))
         tw=sum(w)
-        return sum([w[i]*data[i]/tw for i in range(len(data))])
-    if length==0: length=DB['length']
-    if length<4: return buffer('f'*60)
-    if length<=DB['length']: return targets[str(length)]
-    return multiply_blocktime(estimate_target(DB), estimate_time(DB)/custom.blocktime(length))
+        targets=map(invert, targets)#invert because target is proportional to 1/(# hashes required to mine a block on average)
+        weighted_targets=[multiply_blocktime(targets[i], w[i]/tw) for i in range(len(targets))]
+        return invert(accumulate(weighted_targets))#invert again to fix units
+    def estimate_time(DB):
+        timestamps=recent_blockthings('time', DB, history_length)
+        w=weights(len(blocklengths))#geometric weighting
+        tw=sum(w)#normalization constant
+        blocklengths=[timestamps[i]-timestamps[i-1] for i in range(1, len(timestamps))]
+        return sum([w[i]*blocklengths[i]/tw for i in range(len(blocklengths))])
+    return hexTimesFloat(estimate_target(DB), estimate_time(DB)/custom.blocktime(length))
 def add_block(block, DB):
     def median(mylist): #median is good for weeding out liars, so long as the liars don't have 51% hashpower.
         if len(mylist)<1: return 0
