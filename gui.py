@@ -70,9 +70,6 @@ def home(dic, DB):
     return out.format(s)
 def hex2htmlPicture(string, size):
     return '<img height="{}" src="data:image/png;base64,{}">{}'.format(str(size), string, '{}')
-def newline():
-    return '''<br />
-{}'''
 empty_page='''<html><head></head><body>{}</body></html>'''
 def txt2src(txt):
     return "data:image/png;base64,"+txt
