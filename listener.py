@@ -9,10 +9,10 @@ def main(dic, DB):
             return {'bool':True, 'newdic':dic}
     def blockCount(dic, DB):
         length=DB['length']
-        if length>0:
-            return {'length':length, 'prevHash':DB['recentHash'], 'sig_length':0}
+        if length>=0:
+            return {'length':length, 'prevHash':DB['recentHash'], 'diffLength':DB['diffLength']}
         else:
-            return {'length':0, 'prevHash':0, 'sig_length':0}
+            return {'length':0, 'prevHash':0, 'diffLength':'0'}
     def rangeRequest(dic, DB):
         ran=dic['range']
         out=[]

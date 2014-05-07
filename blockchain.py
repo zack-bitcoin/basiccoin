@@ -60,31 +60,32 @@ def recent_blockthings(key, DB, size=100, length=0):
     if length==0: length=DB['length']
     start= (length-size) if (length-size)>=0 else 0
     return map(get_val, range(start, length))
+def buffer(str):
+    if len(str)<64: return buffer('0'+str)
+    return str
+def hexSum(a, b): return buffer(str(hex(int(a, 16)+int(b, 16)))[2:-1])
+def hexInvert(n): return buffer(str(hex(int('f'*128, 16)/int(n, 16)))[2:-1])#use double-size for division, to reduce information leakage.
 def target(DB, length=0):
     inflection=0.985#This constant is selected such that the 50 most recent blocks count for 1/2 the total weight.
     history_length=400#How far back in history do we compute the target from.
     if length==0: length=DB['length']
     if length<4: return '0'*4+'f'*60#use same difficulty for first few blocks.
     if length<=DB['length']: return targets[str(length)]#don't calculate same difficulty twice.
-    def buffer(str):
-        if len(str)<64: return buffer('0'+str)
-        return str
     def targetTimesFloat(target, number): return buffer(str(hex(int(int(target, 16)*number)))[2:-1])
     def weights(length): return [inflection**(length-i) for i in range(length)]
     def estimate_target(DB):
         def invertTarget(n): return buffer(str(hex(int('f'*128, 16)/int(n, 16)))[2:-1])#use double-size for division, to reduce information leakage.
         def sumTargets(l):
-            def plus(a, b): return buffer(str(hex(int(a, 16)+int(b, 16)))[2:-1])
             if len(l)<1: return 0
             while len(l)>1:
-                l=[plus(l[0], l[1])]+l[2:]
+                l=[hexSum(l[0], l[1])]+l[2:]
             return l[0]
         targets=recent_blockthings('target', DB, history_length)        
         w=weights(len(targets))
         tw=sum(w)
-        targets=map(invertTarget, targets)#invert because target is proportional to 1/(# hashes required to mine a block on average)
+        targets=map(hexInvert, targets)#invert because target is proportional to 1/(# hashes required to mine a block on average)
         weighted_targets=[targetTimesFloat(targets[i], w[i]/tw) for i in range(len(targets))]
-        return invertTarget(sumTargets(weighted_targets))#invert again to fix units
+        return hexInvert(sumTargets(weighted_targets))#invert again to fix units
     def estimate_time(DB):
         timestamps=recent_blockthings('time', DB, history_length)
         blocklengths=[timestamps[i]-timestamps[i-1] for i in range(1, len(timestamps))]
@@ -104,6 +105,9 @@ def add_block(block, DB):
         #print('DB: ' +str(DB))
         length=copy.deepcopy(DB['length'])
         if int(block['length'])!=int(length)+1: return False
+        if block['diffLength']!=hexSum(DB['diffLength'], hexInvert(block['target'])):
+            print('diff length')
+            return False
         if length >=0 and tools.det_hash(db_get(length, DB))!=block['prevHash']: return False
         a=copy.deepcopy(block)
         a.pop('nonce')
@@ -116,6 +120,7 @@ def add_block(block, DB):
         print('add_block: '+str(block))
         db_put(block['length'], block, DB)
         DB['length']=block['length']
+        DB['diffLength']=block['diffLength']
         orphans=DB['txs']
         DB['txs']=[]
         for tx in block['txs']:
@@ -137,5 +142,9 @@ def delete_block(DB):
         transactions.downdate[tx['type']](tx, DB)
     db_delete(DB['length'], DB)
     DB['length']-=1
+    if DB['length']==-1: 
+        DB['diffLength']='0'
+    else:
+        DB['diffLength']=db_get(DB['length'], DB)['diffLength']
     for orphan in sorted(orphans, key=lambda x: x['count']):
         add_tx(tx, DB)

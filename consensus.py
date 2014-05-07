@@ -3,20 +3,25 @@ import blockchain, custom, tools, networking, random, time, copy
 def mine(hashes_till_check, reward_address, DB):
     def make_mint(pubkey, DB): return {'type':'mint', 'id':pubkey, 'count':blockchain.count(pubkey, DB)}
     def genesis(pubkey, DB):
+        target=blockchain.target(DB)
         out={'version':custom.version,
              'length':0,
              'time':time.time(),
-             'target':blockchain.target(DB),
+             'target':target,
+             'diffLength':blockchain.hexInvert(target),
              'txs':[make_mint(pubkey, DB)]}
         out=tools.unpackage(tools.package(out))
         return out
     def make_block(prev_block, txs, pubkey, DB):
         leng=int(prev_block['length'])+1
+        target=blockchain.target(DB, leng)
+        diffLength=blockchain.hexSum(prev_block['diffLength'], blockchain.hexInvert(target))
         out={'version':custom.version,
              'txs':txs+[make_mint(pubkey, DB)],
              'length':leng,
              'time':time.time(),
-             'target':blockchain.target(DB, leng),
+             'diffLength':diffLength,
+             'target':target,
              'prevHash':tools.det_hash(prev_block)}
         out=tools.unpackage(tools.package(out))
         return out
@@ -33,7 +38,6 @@ def mine(hashes_till_check, reward_address, DB):
             if block[u'length']>150:# and block[u'nonce']%10==0: time.sleep(0.1)
             else: time.sleep(0.01)
             '''
-        print('found block: ' +str(block))
         return block
     length=copy.deepcopy(DB['length'])
     if length==-1:
@@ -64,11 +68,14 @@ def peers_check(peers, DB):
         if 'error' in block_count.keys():
             return         
         length=copy.deepcopy(DB['length'])
-        ahead=int(block_count['length'])-length
-        if ahead < 0:#if we are ahead of them
+        us=copy.deepcopy(DB['diffLength'])
+        them=block_count['diffLength']
+        ahead=length-block_count['length']
+        if them < us and ahead>0:#if we are ahead of them
             cmd({'type':'pushblock', 'block':blockchain.db_get(block_count['length']+1, DB)})
             return []
-        if ahead == 0:#if we are on the same block, ask for any new txs
+        if length<0: return []
+        if us == them:#if we are on the same block, ask for any new txs
             block=blockchain.db_get(length, DB)
             if 'recent_hash' in block_count and tools.det_hash(block)!=block_count['recent_hash']:
                 blockchain.delete_block()
