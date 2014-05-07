@@ -55,10 +55,14 @@ def home(dic, DB):
     out=out.format('<p>current block is: ' +str(DB['length'])+'</p>{}')
     try:
         balance=blockchain.db_get(pubkey, DB)
-        print('$$$$$$$$$$$$$$$$$$$$balance: ' +str(balance))
         balance=balance['amount']
     except:
         balance=0
+    for tx in DB['txs']:
+        if tx['type']=='spend' and tx['to']==tools.pub2addr(pubkey):
+            balance+=tx['amount']
+        if tx['type']=='spend' and tx['id']==pubkey:
+            balance-=tx['amount']
     out=out.format('<p>current balance is: ' +str(balance/100000.0)+'</p>{}')
     if balance>0:
         out=out.format(easyForm('/home', 'spend money', '''
