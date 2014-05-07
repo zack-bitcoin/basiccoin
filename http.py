@@ -1,5 +1,4 @@
-from Yashttpd import serve_forever
-from Yashttpd.constants import CHUNK, CONQ
+from Yashttpd import serve_forever, CHUNK, CONQ
 from urlparse import parse_qs
 from mimetypes import guess_type
 
@@ -34,4 +33,4 @@ def handler(request_dict):
     if method == 'POST': return POST(request_dict)
     return {'code':'501'} #method not implemented
 
-def serve(port): return serve_forever(ip, port, CONQ, CHUNK, handler)
+def serve(ip, port): return serve_forever(ip, port, CONQ, CHUNK, handler)
