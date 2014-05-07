@@ -1,4 +1,4 @@
-import time, copy, custom, tools, stackDB, networking, transactions
+import time, copy, custom, tools, networking, transactions
 #this file explains how we talk to the database. It explains the rules for adding blocks and transactions.
 def db_get (n, DB): 
     n=str(n)
@@ -56,6 +56,7 @@ def recent_blockthings(key, DB, size=100, length=0):
         leng=str(length)
         if not leng in storage: storage[leng]=db_get(leng, DB)[key]
         return storage[leng]
+    #print('DB: ' +str(DB))
     if length==0: length=DB['length']
     start= (length-size) if (length-size)>=0 else 0
     return map(get_val, range(start, length))
@@ -96,17 +97,23 @@ def add_block(block, DB):
         if len(mylist)<1: return 0
         return sorted(mylist)[len(mylist) / 2]
     def block_check(block, DB):
-        earliest=median(recent_blockthings('time', DB))
+        if 'error' in block or 'error' in DB: 
+            print('error error')
+            return False
+        if type(block)!=type({'a':1}): 
+            print('type error')
+            return False
+        #print('DB: ' +str(DB))
         length=copy.deepcopy(DB['length'])
-        if 'error' in block.keys(): return False
-        if type(block)!=type({'a':1}): return False
         if int(block['length'])!=int(length)+1: return False
         if length >=0 and tools.det_hash(db_get(length, DB))!=block['prevHash']: return False
         a=copy.deepcopy(block)
         a.pop('nonce')
         if u'target' not in block.keys() or tools.det_hash({u'nonce':block['nonce'], u'halfHash':tools.det_hash(a)})>block['target'] or block['target']!=target(DB, block['length']): return False
+        earliest=median(recent_blockthings('time', DB))
         if 'time' not in block or block['time']>time.time() or block['time']<earliest: return False
         return True
+    #print('trying to add block: ' + str(block))
     if block_check(block, DB):
         print('add_block: '+str(block))
         db_put(block['length'], block, DB)

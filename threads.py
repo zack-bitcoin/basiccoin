@@ -1,6 +1,6 @@
 import consensus, listener, threading, custom, blockchain, leveldb, gui, networking
 db=leveldb.LevelDB(custom.database_name)
-DB={'db':db, 'recentHash':0, 'length':-1, 'sigLength':-1, 'txs':[]}
+DB={'db':db, 'recentHash':0, 'length':-1, 'sigLength':-1, 'txs':[], 'suggested_blocks':[], 'suggested_txs':[]}
 todo=[[consensus.mainloop, (custom.pubkey, custom.peers, custom.hashes_per_check, DB), False],
       [listener.server, (DB, ), False],
       [gui.main, (custom.gui_port, custom.brainwallet, DB), False]]

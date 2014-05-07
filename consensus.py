@@ -1,4 +1,4 @@
-import blockchain, custom, tools, networking, stackDB, random, time, copy
+import blockchain, custom, tools, networking, random, time, copy
 #This file mines blocks and talks to peers. It maintains consensus of the blockchain.
 def mine(hashes_till_check, reward_address, DB):
     def make_mint(pubkey, DB): return {'type':'mint', 'id':pubkey, 'count':blockchain.count(pubkey, DB)}
@@ -33,6 +33,7 @@ def mine(hashes_till_check, reward_address, DB):
             if block[u'length']>150:# and block[u'nonce']%10==0: time.sleep(0.1)
             else: time.sleep(0.01)
             '''
+        print('found block: ' +str(block))
         return block
     length=copy.deepcopy(DB['length'])
     if length==-1:
@@ -43,7 +44,7 @@ def mine(hashes_till_check, reward_address, DB):
         txs=DB['txs']
         block=make_block(prev_block, txs, reward_address, DB)
     block=POW(block, hashes_till_check, blockchain.target(DB, block['length']))
-    stackDB.push('suggested_blocks.db', block)
+    DB['suggested_blocks'].append(block)
 def peers_check(peers, DB):
     def fork_check(newblocks, DB):
         #if we are on a fork, return True
@@ -76,7 +77,7 @@ def peers_check(peers, DB):
             my_txs=DB['txs']
             txs=cmd({'type':'txs'})
             for tx in txs:
-                stackDB.push('suggested_txs.db', tx)
+                DB['suggested_txs'].append(tx)
             pushers=[x for x in my_txs if x not in txs]
             for push in pushers:
                 cmd({'type':'pushtx', 'tx':push})
@@ -97,17 +98,14 @@ def peers_check(peers, DB):
             times-=1
             blockchain.delete_block(DB)
         for block in blocks:
-            stackDB.push('suggested_blocks.db', block)
+            DB['suggested_blocks'].append(block)
     for peer in peers:
         peer_check(peer, DB)
 def suggestions(DB):
-    def file_map(func, file):
-        things=stackDB.load(file)
-        stackDB.reset(file)
-        [func(x, DB) for x in things]
-    map(file_map, [blockchain.add_tx, blockchain.add_block], ['suggested_txs.db', 'suggested_blocks.db'])
-    stackDB.reset('suggested_blocks.db')
-    stackDB.reset('suggested_txs.db')
+    [blockchain.add_tx(tx, DB) for tx in DB['suggested_txs']]
+    [blockchain.add_block(block, DB) for block in DB['suggested_blocks']]
+    DB['suggested_txs']=[]
+    DB['suggested_blocks']=[]
 def mainloop(reward_address, peers, hashes_till_check, DB):
     while True:
         mine(hashes_till_check, reward_address, DB) 

@@ -1,4 +1,4 @@
-import networking, custom, stackDB, tools, leveldb, shutil, time, blockchain
+import networking, custom, tools, leveldb, shutil, time, blockchain
 #Sometimes peers ask us for infomation or push new info to us. This file explains how we respond.
 def main(dic, DB):
     def security_check(dic):
@@ -14,7 +14,6 @@ def main(dic, DB):
         else:
             return {'length':0, 'prevHash':0, 'sig_length':0}
     def rangeRequest(dic, DB):
-        #print('Range Request: '+str(dic))
         ran=dic['range']
         out=[]
         counter=0
@@ -26,11 +25,10 @@ def main(dic, DB):
         return out
     def txs(dic, DB): return DB['txs']
     def pushtx(dic, DB): 
-        #print('PUSHTX')
-        stackDB.push('suggested_txs.db', dic['tx'])
+        DB['suggested_txs'].append(dic['tx'])
         return 'success'
     def pushblock(dic, DB):
-        stackDB.push('suggested_blocks.db', dic['block'])
+        DB['suggested_blocks'].append(dic['block'])
         return 'success'
     funcs={'blockCount':blockCount, 'rangeRequest':rangeRequest, 'txs':txs, 'pushtx':pushtx, 'pushblock':pushblock}
     if dic['type'] not in funcs.keys():
@@ -42,6 +40,4 @@ def main(dic, DB):
         return funcs[dic['type']](check['newdic'], DB)
     except:
         pass
-        #print('LISTENER ERROR. CONTINUING')
 def server(DB): return networking.serve_forever(main, custom.listen_port, DB)
-
