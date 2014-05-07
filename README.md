@@ -9,10 +9,13 @@ INSTALL (for ubuntu)
     git clone https://github.com/zack-bitcoin/basiccoin.git
     cd basiccoin/
 
-RUN
+To run 1 node
+
+    python threads.py
+
+To quickly run 5 nodes (linux/mac only)
 
     ./go.sh
-
 
 Then send your browser to 
 
