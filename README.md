@@ -36,9 +36,15 @@ The purpose of basiccoin is to be the simplest secure currency possible. Current
 ###What are the priorities that shape coding-style?
 
 1)  It should be a secure cryptocurrency.
+
 2)  The part of the code that can change state is kept as small as possible. add_block and delete_block are the only functions that write to the database. The mental-size of a program is largely determined by how many parts of the program can alter the database.
+
 3)  It should be easy to create altcoins with new features just by adding transactions types to the transactions.py file.
+
 4)  Do not allow repetitions in code.
+
 5)  Use the name of a function or variable as the main form of commenting. If something is not clear, instead of adding comments, we just subdivide the complex task into smaller tasks, and accurately name those smaller tasks.
+
 6)  Try to maximize number of ideas that fit on a screen at a time.
+
 7)  pep8
