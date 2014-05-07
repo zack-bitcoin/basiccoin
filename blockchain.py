@@ -97,9 +97,7 @@ def add_block(block, DB):
         if len(mylist)<1: return 0
         return sorted(mylist)[len(mylist) / 2]
     def block_check(block, DB):
-        if 'error' in block or 'error' in DB: 
-            print('error error')
-            return False
+        if 'error' in block or 'error' in DB: return False
         if type(block)!=type({'a':1}): 
             print('type error')
             return False

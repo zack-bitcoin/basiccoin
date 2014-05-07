@@ -1,4 +1,7 @@
 import networking, copy, tools, pt, os, blockchain, custom
+from Yashttpd import serve_forever, CHUNK, CONQ
+from urlparse import parse_qs
+from mimetypes import guess_type
 DEFAULT_BRAIN=''#so that you don't have to type it in every time.
 def spend(amount, pubkey, privkey, to_pubkey, DB):
     amount=int(amount*(10**5))
@@ -18,6 +21,7 @@ submit_form='''
 <input type="submit" value="{}">{}
 </form> {}
 '''
+empty_page='<html><body>{}</body></html>'
 def easyForm(link, button_says, moreHtml='', typee='post'):
     a=submit_form.format(link, '{}', button_says, moreHtml, "{}")
     if typee=='get':
@@ -63,34 +67,11 @@ def home(dic, DB):
     return out.format(s)
 def hex2htmlPicture(string, size):
     return '<img height="{}" src="data:image/png;base64,{}">{}'.format(str(size), string, '{}')
-empty_page='<html><body>{}</body></html>'
-def txt2src(txt):
-    return "data:image/png;base64,"+txt
-
-
-
-
-
-
-from Yashttpd import serve_forever, CHUNK, CONQ
-from urlparse import parse_qs
-from mimetypes import guess_type
-
 def GET(request_dict):
     path = request_dict['uri'][1:]
     if path == '':
         message = page1(DEFAULT_BRAIN)
         return {'code':'200', 'message':message, 'headers':{'Content-Type':'text/html', 'Content-Length':str(len(message))}}
-    path = os.path.join(os.getcwd(), path)
-    if not os.path.exists(path): return {'code':'404'} #not found
-    typ_, encoding = guess_type(path)
-    f = open(path)
-    message = f.read()
-    f.close()
-    headers = {'Content-Type':typ_, 'Content-Length':str(len(message))}
-    if encoding: headers.update({'Content-Encoding':encoding})
-    return {'code':'200', 'message':message, 'headers':headers}
-
 def POST(request_dict):
     path = request_dict['uri']
     if path != '/home': return {'code':'404'}
@@ -99,20 +80,15 @@ def POST(request_dict):
     for fix in fixes: field_info.update(fix)
     message = home(field_info, DB)
     return {'code':'200', 'message':message, 'headers':{'Content-Type':'text/html', 'Content-Length':str(len(message))}}
-
 def handler(request_dict):
     method = request_dict['method']
     if method == 'GET': return GET(request_dict)
     if method == 'POST': return POST(request_dict)
     return {'code':'501'} #method not implemented
-
-def serve(ip, port): return serve_forever(ip, port, CONQ, CHUNK, handler)
-
-
 def main(port, brain_wallet, db):
     global DEFAULT_BRAIN
     global DB
     DEFAULT_BRAIN = brain_wallet
     DB = db
     ip = ''
-    serve('localhost', port)
+    serve_forever('localhost', port, CONQ, CHUNK, handler)
