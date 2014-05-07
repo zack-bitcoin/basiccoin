@@ -1,4 +1,4 @@
-from Yashttpd import serve_forever, CHUNK, CONQ
+from yashttpd import serve_forever, CHUNK, CONQ
 from urlparse import parse_qs
 from mimetypes import guess_type
 
