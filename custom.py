@@ -10,7 +10,11 @@ fee=10**3
 brainwallet='brain wallet'
 privkey=pt.sha256(brainwallet)
 pubkey=pt.privtopub(privkey)
-peers=[['localhost', 8901],['localhost', 8902],['localhost', 8903],['localhost', 8904],['localhost', 8905]]
+peers=[['localhost', 8901],
+       ['localhost', 8902],
+       ['localhost', 8903],
+       ['localhost', 8904],
+       ['localhost', 8905]]
 hashes_per_check=10**5
 def blocktime(length):
     if length*block_reward<premine:

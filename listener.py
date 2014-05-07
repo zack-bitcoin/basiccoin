@@ -30,7 +30,8 @@ def main(dic, DB):
     def pushblock(dic, DB):
         DB['suggested_blocks'].append(dic['block'])
         return 'success'
-    funcs={'blockCount':blockCount, 'rangeRequest':rangeRequest, 'txs':txs, 'pushtx':pushtx, 'pushblock':pushblock}
+    funcs={'blockCount':blockCount, 'rangeRequest':rangeRequest, 
+           'txs':txs, 'pushtx':pushtx, 'pushblock':pushblock}
     if dic['type'] not in funcs.keys():
         return str(dic['type'])+' is not in the api'
     check=security_check(dic)

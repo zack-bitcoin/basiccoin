@@ -4,7 +4,8 @@ from mimetypes import guess_type
 def GET(DB, request_dict, func):
     path = request_dict['uri'][1:]
     message = func(DB, DEFAULT_BRAIN)
-    return {'code':'200', 'message':message, 'headers':{'Content-Type':'text/html', 'Content-Length':str(len(message))}}
+    return {'code':'200', 'message':message, 
+            'headers':{'Content-Type':'text/html', 'Content-Length':str(len(message))}}
 def POST(DB, request_dict, func):
     path = request_dict['uri']
     if path != '/home': return {'code':'404'}
@@ -12,7 +13,8 @@ def POST(DB, request_dict, func):
     fixes = ({key:val[0]} if len(val)>0 else {key:''} for key, val in field_info.items()) #generator
     for fix in fixes: field_info.update(fix)
     message = func(DB, field_info)
-    return {'code':'200', 'message':message, 'headers':{'Content-Type':'text/html', 'Content-Length':str(len(message))}}
+    return {'code':'200', 'message':message, 
+            'headers':{'Content-Type':'text/html', 'Content-Length':str(len(message))}}
 def server(DB, port, get_func, post_func):
     def handler(request_dict):
         method = request_dict['method']

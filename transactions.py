@@ -3,7 +3,8 @@ import blockchain, custom, copy, tools, pt
 def spend_verify(tx, txs, DB): 
     tx_copy=copy.copy(tx)
     tx_copy.pop('signature')
-    if not pt.ecdsa_verify(tools.det_hash(tx_copy), tx['signature'], tx['id']): return False
+    msg=tools.det_hash(tx_copy)
+    if not pt.ecdsa_verify(msg, tx['signature'], tx['id']): return False
     if tx['amount']<custom.fee: return False
     if int(blockchain.db_get(tx['id'], DB)['amount'])<int(tx['amount']): return False
     return True

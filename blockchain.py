@@ -111,9 +111,14 @@ def add_block(block, DB):
         if length >=0 and tools.det_hash(db_get(length, DB))!=block['prevHash']: return False
         a=copy.deepcopy(block)
         a.pop('nonce')
-        if u'target' not in block.keys() or tools.det_hash({u'nonce':block['nonce'], u'halfHash':tools.det_hash(a)})>block['target'] or block['target']!=target(DB, block['length']): return False
+        if u'target' not in block.keys(): return False
+        half_way={u'nonce':block['nonce'], u'halfHash':tools.det_hash(a)}
+        if tools.det_hash(half_way)>block['target']: return False
+        if block['target']!=target(DB, block['length']): return False
         earliest=median(recent_blockthings('time', DB))
-        if 'time' not in block or block['time']>time.time() or block['time']<earliest: return False
+        if 'time' not in block: return False
+        if block['time']>time.time(): return False
+        if block['time']<earliest: return False
         return True
     #print('trying to add block: ' + str(block))
     if block_check(block, DB):
