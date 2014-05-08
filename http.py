@@ -3,7 +3,7 @@ from urlparse import parse_qs
 from mimetypes import guess_type
 def GET(DB, request_dict, func):
     path = request_dict['uri'][1:]
-    message = func(DB, DEFAULT_BRAIN)
+    message = func(DB)
     return {'code':'200', 'message':message, 
             'headers':{'Content-Type':'text/html', 'Content-Length':str(len(message))}}
 def POST(DB, request_dict, func):
