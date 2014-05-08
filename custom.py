@@ -16,6 +16,7 @@ peers=[['localhost', 8901],
        ['localhost', 8904],
        ['localhost', 8905]]
 hashes_per_check=10**5
+
 def blocktime(length):
     if length*block_reward<premine:
         return 30
