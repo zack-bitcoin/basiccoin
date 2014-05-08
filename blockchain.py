@@ -25,6 +25,7 @@ def count(pubkey, DB):
     #returns the number of transactions that pubkey has broadcast.
     def zeroth_confirmation_txs(pubkey, DB): 
         return len(filter(lambda t: pubkey==t['id'], DB['txs']))
+        
     current=db_get(pubkey, DB)['count']
     return current+zeroth_confirmation_txs(pubkey, DB)
 
@@ -32,11 +33,15 @@ def add_tx(tx, DB):
     #Attempt to add a new transaction into the pool.
     tx_check=transactions.tx_check
     def verify_count(tx, txs): return tx['count']!=count(tx['id'], DB)
+    
     def tx_type_check(tx, txs): return type(tx) != type({'a':1})
+    
     def type_check(tx, txs): 
         return 'type' not in tx or tx['type'] not in tx_check
+        
     def too_big_block(tx, txs): 
         return len(tools.package(txs+[tx]))>networking.MAX_MESSAGE_SIZE-5000
+        
     def verify_tx(tx, txs):
         if type_check(tx, txs): return False
         if verify_count(tx, txs): return False
@@ -44,18 +49,22 @@ def add_tx(tx, DB):
         if 'start' in tx and DB['length']<tx['start']: return False
         if 'end' in tx and DB['length']>tx['end']: return False
         return tx_check[tx['type']](tx, txs, DB)
+        
     if verify_tx(tx, DB['txs']): DB['txs'].append(tx)
 
 targets={}
 times={}#stores blocktimes
+
 def recent_blockthings(key, DB, size=100, length=0):
     #Grabs info from old blocks.
     if key=='time': storage=times
     if key=='target': storage=targets
+    
     def get_val(length):
         leng=str(length)
         if not leng in storage: storage[leng]=db_get(leng, DB)[key]
         return storage[leng]
+        
     #print('DB: ' +str(DB))
     if length==0: length=DB['length']
     start= (length-size) if (length-size)>=0 else 0
@@ -80,9 +89,12 @@ def target(DB, length=0):
     if length==0: length=DB['length']
     if length<4: return '0'*4+'f'*60#use same difficulty for first few blocks.
     if length<=DB['length']: return targets[str(length)]#memoized
+    
     def targetTimesFloat(target, number): 
         return buffer(str(hex(int(int(target, 16)*number)))[2:-1])
+        
     def weights(length): return [inflection**(length-i) for i in range(length)]
+    
     def estimate_target(DB):
         #We are actually interested in the average number of hashes requred
         #to mine a block. number of hashes required is inversely proportional
@@ -93,6 +105,7 @@ def target(DB, length=0):
             while len(l)>1:
                 l=[hexSum(l[0], l[1])]+l[2:]
             return l[0]
+            
         targets=recent_blockthings('target', DB, history_length)        
         w=weights(len(targets))
         tw=sum(w)
@@ -100,12 +113,14 @@ def target(DB, length=0):
         def weighted_multiply(i): return targetTimesFloat(targets[i], w[i]/tw)
         weighted_targets=[weighted_multiply(i) for i in range(len(targets))]
         return hexInvert(sumTargets(weighted_targets))
+        
     def estimate_time(DB):
         times=recent_blockthings('time', DB, history_length)
         blocklengths=[times[i]-times[i-1] for i in range(1, len(times))]
         w=weights(len(blocklengths))#geometric weighting
         tw=sum(w)#normalization constant
         return sum([w[i]*blocklengths[i]/tw for i in range(len(blocklengths))])
+        
     retarget=estimate_time(DB)/custom.blocktime(length)
     return targetTimesFloat(estimate_target(DB), retarget)
 
@@ -115,6 +130,7 @@ def add_block(block, DB):
     def median(mylist): #the liars don't have 51% hashpower.
         if len(mylist)<1: return 0
         return sorted(mylist)[len(mylist) / 2]
+        
     def block_check(block, DB):
         if 'error' in block or 'error' in DB: return False
         if type(block)!=type({'a':1}): 
@@ -141,6 +157,7 @@ def add_block(block, DB):
         if block['time']>time.time(): return False
         if block['time']<earliest: return False
         return True
+        
     #print('trying to add block: ' + str(block))
     if block_check(block, DB):
         print('add_block: '+str(block))
