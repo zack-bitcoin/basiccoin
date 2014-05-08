@@ -1,4 +1,5 @@
 import consensus, listener, threading, custom, blockchain, leveldb, gui, networking
+
 db=leveldb.LevelDB(custom.database_name)
 DB={'db':db, 
     'recentHash':0, 

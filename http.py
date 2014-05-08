@@ -21,9 +21,11 @@ def POST(DB, request_dict, func):
                        'Content-Length':str(len(message))}}
 
 def server(DB, port, get_func, post_func):
+    
     def handler(request_dict):
         method = request_dict['method']
         if method == 'GET': return GET(DB, request_dict, get_func)
         if method == 'POST': return POST(DB, request_dict, post_func)
         return {'code':'501'} #method not implemented
+        
     serve_forever('localhost', port, CONQ, CHUNK, handler)

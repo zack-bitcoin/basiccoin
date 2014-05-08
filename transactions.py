@@ -35,6 +35,7 @@ add_block={'mint':mint, 'spend':spend}####
 def unmint(tx, DB):
     adjust('amount', tx['id'], -custom.block_reward, DB)
     adjust('count', tx['id'], -1, DB)
+    
 def unspend(tx, DB):
     adjust('amount', tx['id'], tx['amount'], DB)
     adjust('amount', tx['to'], custom.fee-tx['amount'], DB)
