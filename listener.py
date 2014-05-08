@@ -2,12 +2,14 @@ import networking, custom, tools, leveldb, shutil, time, blockchain
 #Sometimes peers ask us for infomation or push new transactions or blocks to 
 #us. This file explains how we respond.
 def main(dic, DB):
+    
     def security_check(dic):
         if 'version' not in dic or dic['version']!=custom.version:
             return {'bool':False, 'error':'version'}
         else:
             #we could add security freatures here.
             return {'bool':True, 'newdic':dic}
+            
     def blockCount(dic, DB):
         length=DB['length']
         if length>=0:
@@ -15,6 +17,7 @@ def main(dic, DB):
                     'diffLength':DB['diffLength']}
         else:
             return {'length':0, 'prevHash':0, 'diffLength':'0'}
+            
     def rangeRequest(dic, DB):
         ran=dic['range']
         out=[]
@@ -25,13 +28,17 @@ def main(dic, DB):
                 out.append(block)
             counter+=1
         return out
+        
     def txs(dic, DB): return DB['txs']
+    
     def pushtx(dic, DB): 
         DB['suggested_txs'].append(dic['tx'])
         return 'success'
+        
     def pushblock(dic, DB):
         DB['suggested_blocks'].append(dic['block'])
         return 'success'
+        
     funcs={'blockCount':blockCount, 'rangeRequest':rangeRequest, 
            'txs':txs, 'pushtx':pushtx, 'pushblock':pushblock}
     if dic['type'] not in funcs.keys():
