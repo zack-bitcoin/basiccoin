@@ -1,6 +1,8 @@
 basiccoin
 
-The simplest currency. 
+The simplest currency.
+
+(The author will become homeless in 2 months) Donations: 1GbpRPE83Vjg73KFvTVZ4EnS2qNkiLY5TT
 
 INSTALL (for ubuntu)
 
