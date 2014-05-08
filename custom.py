@@ -18,7 +18,7 @@ peers=[['localhost', 8901],
 hashes_per_check=10**5
 def blocktime(length):
     if length*block_reward<premine:
-        return 30#I can't get the blocks to come much quicker than 3. This needs to be optimized badly.
+        return 30
     else:
         return 60
 

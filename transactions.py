@@ -1,14 +1,17 @@
 import blockchain, custom, copy, tools, pt
-#This file explains how we tell if a transaction is valid or not, it explains how we update the system when new transactions are added to the blockchain.
+#This file explains how we tell if a transaction is valid or not, it explains 
+#how we update the system when new transactions are added to the blockchain.
 def spend_verify(tx, txs, DB): 
     tx_copy=copy.copy(tx)
     tx_copy.pop('signature')
     msg=tools.det_hash(tx_copy)
     if not pt.ecdsa_verify(msg, tx['signature'], tx['id']): return False
     if tx['amount']<custom.fee: return False
-    if int(blockchain.db_get(tx['id'], DB)['amount'])<int(tx['amount']): return False
+    if int(blockchain.db_get(tx['id'], DB)['amount'])<int(tx['amount']): 
+        return False
     return True
-def mint_verify(tx, txs, DB): return 0==len(filter(lambda t: t['type']=='mint', txs))
+def mint_verify(tx, txs, DB): 
+    return 0==len(filter(lambda t: t['type']=='mint', txs))
 tx_check={'spend':spend_verify, 'mint':mint_verify}
 
 def adjust(key, pubkey, amount, DB):

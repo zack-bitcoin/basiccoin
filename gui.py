@@ -1,5 +1,7 @@
 import networking, copy, tools, pt, os, blockchain, custom, http
-#the easiest way to understand this file is to try it out and have a look at the html it creates. It creates a very simple page that allows you to spend money.
+#the easiest way to understand this file is to try it out and have a look at 
+#the html it creates. It creates a very simple page that allows you to spend 
+#money.
 def spend(amount, pubkey, privkey, to_pubkey, DB):
     amount=int(amount*(10**5))
     tx={'type':'spend', 'id':pubkey, 'amount':amount, 'to':to_pubkey}
@@ -28,7 +30,8 @@ def easyForm(link, button_says, moreHtml='', typee='post'):
 linkHome = easyForm('/', 'HOME', '', 'get')
 def page1(DB, brainwallet=custom.brainwallet):
     out=empty_page
-    out=out.format(easyForm('/home', 'Play Go!', '<input type="text" name="BrainWallet" value="{}">'.format(brainwallet)))
+    txt='<input type="text" name="BrainWallet" value="{}">'
+    out=out.format(easyForm('/home', 'Play Go!', txt.format(brainwallet)))
     return out.format('')
 def home(DB, dic):
     if 'BrainWallet' in dic:
@@ -41,8 +44,8 @@ def home(DB, dic):
         if dic['do']=='spend':
             spend(float(dic['amount']), pubkey, privkey, dic['to'], DB)
     out=empty_page
-    out=out.format('<p>your address is: ' +str(tools.pub2addr(pubkey))+'</p>{}')
-    out=out.format('<p>current block is: ' +str(DB['length'])+'</p>{}')
+    out=out.format('<p>your address: ' +str(tools.pub2addr(pubkey))+'</p>{}')
+    out=out.format('<p>current block: ' +str(DB['length'])+'</p>{}')
     try:
         balance=blockchain.db_get(pubkey, DB)
         balance=balance['amount']
@@ -60,10 +63,12 @@ def home(DB, dic):
         <input type="text" name="to" value="address to give to">
         <input type="text" name="amount" value="amount to spend">
         <input type="hidden" name="privkey" value="{}">'''.format(privkey)))    
-    s=easyForm('/home', 'Refresh', '''    <input type="hidden" name="privkey" value="{}">'''.format(privkey))
+    txt='''    <input type="hidden" name="privkey" value="{}">'''
+    s=easyForm('/home', 'Refresh', txt.format(privkey))
     return out.format(s)
 def hex2htmlPicture(string, size):
-    return '<img height="{}" src="data:image/png;base64,{}">{}'.format(str(size), string, '{}')
+    txt='<img height="{}" src="data:image/png;base64,{}">{}'
+    return txt.format(str(size), string, '{}')
 def main(port, brain_wallet, db):
     global DB
     DB = db
