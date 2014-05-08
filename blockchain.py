@@ -7,7 +7,7 @@ def db_get(n, DB):
         try:
             a=DB['db'].Get(n)
         except:
-            db_put(n, {'count':0, 'amount':0}, DB)
+            db_put(n, {'count':0, 'amount':0}, DB)#everyone defaults with having zero money, and having broadcast zero transcations.
             return db_get(n, DB)
     return tools.unpackage(DB['db'].Get(n))
 def db_put(key, dic, DB):  
@@ -120,7 +120,7 @@ def add_block(block, DB):
         orphans=DB['txs']
         DB['txs']=[]
         for tx in block['txs']:
-            transactions.update[tx['type']](tx, DB)
+            transactions.add_block[tx['type']](tx, DB)
         for tx in orphans:
             add_tx(tx, DB)
 def delete_block(DB):
@@ -136,7 +136,7 @@ def delete_block(DB):
     DB['txs']=[]
     for tx in block['txs']:
         orphans.append(tx)
-        transactions.downdate[tx['type']](tx, DB)
+        transactions.delete_block[tx['type']](tx, DB)
     db_delete(DB['length'], DB)
     DB['length']-=1
     if DB['length']==-1: 
