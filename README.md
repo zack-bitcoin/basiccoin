@@ -54,6 +54,7 @@ The purpose of basiccoin is to be the simplest secure currency possible. Current
 ```javascript
 //Example transaction 
 
+
 {'type':'spend', 
  'id':pubkey1, 
  'to':pubkey2, 
@@ -61,6 +62,9 @@ The purpose of basiccoin is to be the simplest secure currency possible. Current
  'end':1200,
  'count':24, 
  'signature':hodsnfoubewuwe==/dsnfiosfwf}
+
+
+{'type':'spend', 'id':pubkey1, 'to':pubkey2, 'start':1000, 'end':1200, 'count':24, 'signature':hodsnfoubewuwe==/dsnfiosfwf}
 
 ```
 
