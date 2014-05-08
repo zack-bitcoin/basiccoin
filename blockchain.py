@@ -1,13 +1,15 @@
 import time, copy, custom, tools, networking, transactions
 #this file explains how we talk to the database. It explains the rules for adding blocks and transactions.
-def db_get (n, DB): 
+def db_get(n, DB): 
     n=str(n)
-    if len(n)==130: n=tools.pub2addr(n)
-    try:
-        a=DB['db'].Get(n)
-    except:
-        error('here')
-    return tools.unpackage(a)
+    if len(n)==130: 
+        n=tools.pub2addr(n)
+        try:
+            a=DB['db'].Get(n)
+        except:
+            db_put(n, {'count':0, 'amount':0}, DB)
+            return db_get(n, DB)
+    return tools.unpackage(DB['db'].Get(n))
 def db_put(key, dic, DB):  
     key=str(key)
     if len(key)==130: key=tools.pub2addr(key)#store by pubkey hash instead of pubkey to defend against theoretical quantum computing attack.
@@ -15,28 +17,9 @@ def db_put(key, dic, DB):
 def db_delete(key, DB): return DB['db'].Delete(str(key))
 def count(pubkey, DB):
     #returns the number of transactions that pubkey has broadcast.
-    def zeroth_confirmation_txs(pubkey, DB):
-        c=0
-        try:
-            txs=DB['txs']
-        except:
-            DB['txs']=[]
-            return 0
-        for t in txs:
-            if pubkey==t['id']:
-                c+=1
-        return c
-    def current(pubkey, DB):
-        try:
-            acc=db_get(pubkey, DB)
-        except:
-            acc={'count':0, 'amount':0}
-            db_put(pubkey, acc, DB)
-        if 'count' not in acc:
-            acc['count']=0
-            db_put(pubkey, acc, DB)
-        return acc['count']
-    return current(pubkey, DB)+zeroth_confirmation_txs(pubkey, DB)
+    def zeroth_confirmation_txs(pubkey, DB): return len(filter(lambda t: pubkey==t['id'], DB['txs']))
+    current=db_get(pubkey, DB)['count']
+    return current+zeroth_confirmation_txs(pubkey, DB)
 def add_tx(tx, DB):
     #Attempt to add a new transaction into the pool to be included in the next block.
     tx_check=transactions.tx_check
