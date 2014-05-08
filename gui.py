@@ -6,6 +6,7 @@ def spend(amount, pubkey, privkey, to_pubkey, DB):
     amount=int(amount*(10**5))
     tx={'type':'spend', 'id':pubkey, 'amount':amount, 'to':to_pubkey}
     easy_add_transaction(tx, privkey, DB)
+
 def easy_add_transaction(tx_orig, privkey, DB):
     tx=copy.deepcopy(tx_orig)
     pubkey=pt.privtopub(privkey)
@@ -15,24 +16,29 @@ def easy_add_transaction(tx_orig, privkey, DB):
         tx['count']=1
     tx['signature']=pt.ecdsa_sign(tools.det_hash(tx), privkey)
     blockchain.add_tx(tx, DB)
+
 submit_form='''
 <form name="first" action="{}" method="{}">
 <input type="submit" value="{}">{}
 </form> {}
 '''
 empty_page='<html><body>{}</body></html>'
+
 def easyForm(link, button_says, moreHtml='', typee='post'):
     a=submit_form.format(link, '{}', button_says, moreHtml, "{}")
     if typee=='get':
         return a.format('get', '{}')
     else:
         return a.format('post', '{}')
+
 linkHome = easyForm('/', 'HOME', '', 'get')
+
 def page1(DB, brainwallet=custom.brainwallet):
     out=empty_page
     txt='<input type="text" name="BrainWallet" value="{}">'
     out=out.format(easyForm('/home', 'Play Go!', txt.format(brainwallet)))
     return out.format('')
+
 def home(DB, dic):
     if 'BrainWallet' in dic:
         dic['privkey']=pt.sha256(dic['BrainWallet'])
@@ -66,9 +72,11 @@ def home(DB, dic):
     txt='''    <input type="hidden" name="privkey" value="{}">'''
     s=easyForm('/home', 'Refresh', txt.format(privkey))
     return out.format(s)
+
 def hex2htmlPicture(string, size):
     txt='<img height="{}" src="data:image/png;base64,{}">{}'
     return txt.format(str(size), string, '{}')
+
 def main(port, brain_wallet, db):
     global DB
     DB = db

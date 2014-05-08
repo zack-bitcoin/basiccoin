@@ -43,4 +43,5 @@ def main(dic, DB):
         return funcs[dic['type']](check['newdic'], DB)
     except:
         pass
+
 def server(DB): return networking.serve_forever(main, custom.listen_port, DB)

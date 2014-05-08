@@ -8,6 +8,7 @@ def GET(DB, request_dict, func):
     return {'code':'200', 'message':message, 
             'headers':{'Content-Type':'text/html', 
                        'Content-Length':str(len(message))}}
+
 def POST(DB, request_dict, func):
     path = request_dict['uri']
     if path != '/home': return {'code':'404'}
@@ -18,6 +19,7 @@ def POST(DB, request_dict, func):
     return {'code':'200', 'message':message, 
             'headers':{'Content-Type':'text/html', 
                        'Content-Length':str(len(message))}}
+
 def server(DB, port, get_func, post_func):
     def handler(request_dict):
         method = request_dict['method']

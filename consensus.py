@@ -53,6 +53,7 @@ def mine(hashes_till_check, reward_address, DB):
         block=make_block(prev_block, txs, reward_address, DB)
     block=POW(block, hashes_till_check, blockchain.target(DB, block['length']))
     DB['suggested_blocks'].append(block)
+
 def peers_check(peers, DB):
     #check on the peers to see if they know about more blocks than we do.
     def fork_check(newblocks, DB):
@@ -115,6 +116,7 @@ def peers_check(peers, DB):
             DB['suggested_blocks'].append(block)
     for peer in peers:
         peer_check(peer, DB)
+
 def suggestions(DB):
     #the other thread called listener.server is listening to peers and adding 
     #suggested transactions and blocks from them into these lists of 
@@ -123,6 +125,7 @@ def suggestions(DB):
     [blockchain.add_block(block, DB) for block in DB['suggested_blocks']]
     DB['suggested_txs']=[]
     DB['suggested_blocks']=[]
+
 def mainloop(reward_address, peers, hashes_till_check, DB):
     while True:
         mine(hashes_till_check, reward_address, DB) 

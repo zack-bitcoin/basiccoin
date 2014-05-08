@@ -14,6 +14,7 @@ def kill_processes_using_ports(ports):
         if match:
             pid = match.group('pid')
             subprocess.Popen(['kill', '-9', pid])
+
 def serve_forever(message_handler_func, PORT, queue):
     server = socket.socket()
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -26,6 +27,7 @@ def serve_forever(message_handler_func, PORT, queue):
         #we could insert security checks here
         data=tools.unpackage(data)
         client.send(tools.package(message_handler_func(data, queue)))
+
 def connect(msg, host, port):
     if len(msg)<1 or len(msg)>MAX_MESSAGE_SIZE:
         print('wrong sized message')
@@ -43,4 +45,5 @@ def connect(msg, host, port):
         #print('THE ERROR WAS: ' +str(e))
         #print('disconnect')
         return {'error':'error'}
+
 def send_command(peer, msg): return connect(msg, peer[0], peer[1])

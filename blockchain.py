@@ -12,18 +12,22 @@ def db_get(n, DB):
                #having zero money, and having broadcast zero transcations.
             return db_get(n, DB)
     return tools.unpackage(DB['db'].Get(n))
+
 def db_put(key, dic, DB):  
     key=str(key)
     if len(key)==130: key=tools.pub2addr(key)#store by pubkey hash instead of 
     #pubkey to defend against theoretical quantum computing attack.
     return DB['db'].Put(key, tools.package(dic))
+
 def db_delete(key, DB): return DB['db'].Delete(str(key))
+
 def count(pubkey, DB):
     #returns the number of transactions that pubkey has broadcast.
     def zeroth_confirmation_txs(pubkey, DB): 
         return len(filter(lambda t: pubkey==t['id'], DB['txs']))
     current=db_get(pubkey, DB)['count']
     return current+zeroth_confirmation_txs(pubkey, DB)
+
 def add_tx(tx, DB):
     #Attempt to add a new transaction into the pool.
     tx_check=transactions.tx_check
@@ -41,6 +45,7 @@ def add_tx(tx, DB):
         if 'end' in tx and DB['length']>tx['end']: return False
         return tx_check[tx['type']](tx, txs, DB)
     if verify_tx(tx, DB['txs']): DB['txs'].append(tx)
+
 targets={}
 times={}#stores blocktimes
 def recent_blockthings(key, DB, size=100, length=0):
@@ -55,14 +60,18 @@ def recent_blockthings(key, DB, size=100, length=0):
     if length==0: length=DB['length']
     start= (length-size) if (length-size)>=0 else 0
     return map(get_val, range(start, length))
+
 def buffer(str):
     #target is supposed to be 64 characters long
     if len(str)<64: return buffer('0'+str)
     return str
+
 #sum of numbers expressed as hexidecimal strings
 def hexSum(a, b): return buffer(str(hex(int(a, 16)+int(b, 16)))[2:-1])
+
 #use double-size for division, to reduce information leakage.
 def hexInvert(n): return buffer(str(hex(int('f'*128, 16)/int(n, 16)))[2:-1])
+
 def target(DB, length=0):
     #returns the target difficulty at a paticular blocklength.
     inflection=0.985#This constant is selected such that the 50 most recent 
@@ -99,6 +108,7 @@ def target(DB, length=0):
         return sum([w[i]*blocklengths[i]/tw for i in range(len(blocklengths))])
     retarget=estimate_time(DB)/custom.blocktime(length)
     return targetTimesFloat(estimate_target(DB), retarget)
+
 def add_block(block, DB):
     #attempts adding a new block to the blockchain.
     #median is good for weeding out liars, so long as 
@@ -143,6 +153,7 @@ def add_block(block, DB):
             transactions.add_block[tx['type']](tx, DB)
         for tx in orphans:
             add_tx(tx, DB)
+
 def delete_block(DB):
     #removes the most recent block from the blockchain.
     if DB['length']<0: return

@@ -1,6 +1,7 @@
 import hashlib, pt
 from json import dumps as package, loads as unpackage
 def pub2addr(x): return pt.pubtoaddr(x)
+
 def det_hash(x):#deterministically takes sha256 of dict, list, int, or string
     def det_list(l): return '[%s]' % ','.join(map(det, sorted(l)))
     def det_dict(x): 
