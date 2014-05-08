@@ -4,6 +4,7 @@ def mine(hashes_till_check, reward_address, DB):
     #tries to mine the next block hashes_till_check many times.
     def make_mint(pubkey, DB): return {'type':'mint', 'id':pubkey, 
                                        'count':blockchain.count(pubkey, DB)}
+                                       
     def genesis(pubkey, DB):
         target=blockchain.target(DB)
         out={'version':custom.version,
@@ -14,6 +15,7 @@ def mine(hashes_till_check, reward_address, DB):
              'txs':[make_mint(pubkey, DB)]}
         out=tools.unpackage(tools.package(out))
         return out
+        
     def make_block(prev_block, txs, pubkey, DB):
         leng=int(prev_block['length'])+1
         target=blockchain.target(DB, leng)
@@ -28,6 +30,7 @@ def mine(hashes_till_check, reward_address, DB):
              'prevHash':tools.det_hash(prev_block)}
         out=tools.unpackage(tools.package(out))
         return out
+        
     def POW(block, hashes, target):
         halfHash=tools.det_hash(block)
         block[u'nonce']=random.randint(0,100000000000000000)
@@ -43,6 +46,7 @@ def mine(hashes_till_check, reward_address, DB):
             else: time.sleep(0.01)
             '''
         return block
+        
     length=copy.deepcopy(DB['length'])
     if length==-1:
         block=genesis(reward_address, DB)
@@ -66,6 +70,7 @@ def peers_check(peers, DB):
         except Exception as e:
             #print('ERROR: ' +str(e))
             return False
+            
     def peer_check(peer, DB):
         cmd=(lambda x: networking.send_command(peer, x))
         block_count=cmd({'type':'blockCount'})
@@ -114,6 +119,7 @@ def peers_check(peers, DB):
             blockchain.delete_block(DB)
         for block in blocks:
             DB['suggested_blocks'].append(block)
+            
     for peer in peers:
         peer_check(peer, DB)
 
