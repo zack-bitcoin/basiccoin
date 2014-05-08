@@ -45,6 +45,8 @@ def add_tx(tx, DB):
         if type_check(tx, txs): return False
         if verify_count(tx, txs): return False
         if too_big_block(tx, txs): return False
+        if 'start' in tx and DB['length']<tx['start']: return False
+        if 'end' in tx and DB['length']>tx['end']: return False
         return tx_check[tx['type']](tx, txs, DB)
     if verify_tx(tx, DB['txs']): DB['txs'].append(tx)
 targets={}

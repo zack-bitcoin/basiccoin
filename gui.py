@@ -1,5 +1,4 @@
 import networking, copy, tools, pt, os, blockchain, custom, http
-DEFAULT_BRAIN=''#so that you don't have to type it in every time.
 def spend(amount, pubkey, privkey, to_pubkey, DB):
     amount=int(amount*(10**5))
     tx={'type':'spend', 'id':pubkey, 'amount':amount, 'to':to_pubkey}
@@ -26,7 +25,7 @@ def easyForm(link, button_says, moreHtml='', typee='post'):
     else:
         return a.format('post', '{}')
 linkHome = easyForm('/', 'HOME', '', 'get')
-def page1(DB, brainwallet=DEFAULT_BRAIN):
+def page1(DB, brainwallet=custom.brainwallet):
     out=empty_page
     out=out.format(easyForm('/home', 'Play Go!', '<input type="text" name="BrainWallet" value="{}">'.format(brainwallet)))
     return out.format('')
@@ -65,9 +64,7 @@ def home(DB, dic):
 def hex2htmlPicture(string, size):
     return '<img height="{}" src="data:image/png;base64,{}">{}'.format(str(size), string, '{}')
 def main(port, brain_wallet, db):
-    global DEFAULT_BRAIN
     global DB
-    DEFAULT_BRAIN = brain_wallet
     DB = db
     ip = ''
     http.server(DB, port, page1, home)
