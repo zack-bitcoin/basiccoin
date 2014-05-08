@@ -49,14 +49,14 @@ http://paulgraham.com/power.html
 
 1)  It should be a secure cryptocurrency.
 
-2)  The mental-size of a program is largely determined by how many parts of the program can alter the database. Hierarchy of who controls the blockchain:
+2)  It should be easy to create altcoins with new features just by adding transactions types to the transactions.py file.
+
+3)  The mental-size of a program is largely determined by how many parts of the program can alter the database. Hierarchy of who controls the blockchain:
 
     blockchain.db_put() and blockchain.db_delete() are low level functions that change the blockchain.
-    blockchain.add_block() and blockchain.delete_block(), transactions.add_block(), and transactions.delete_block() are the only functions that use db_put and db_delete
+    blockchain.add_block() and blockchain.delete_block(), transactions.add_block(), and transactions.delete_block() are the only parts that use db_put and db_delete
     blockchain.add_block() and blockchain.delete_block() are the only functions that use transactions.add_block() and transactions.delete_block()
-    consensus.mainloop() is the only thread which uses add_block and delete_block().
-
-3)  It should be easy to create altcoins with new features just by adding transactions types to the transactions.py file.
+    consensus.mainloop() is the only thread which uses add_block() and delete_block().
 
 4)  Do not allow repetitions in code.
 
