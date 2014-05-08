@@ -35,11 +35,25 @@ Bitcoin currently has 40445 lines of C++ and assembly, not including gui or test
 When things get complicated, it is good to return to the basics.
 The purpose of basiccoin is to be the simplest secure currency possible. Currently about 550 lines of python, and getting smaller. Basiccoin is designed to be easily modified to create new alts.
 
+###How do I read this?
+
+This code is written functionally. Functions are only supposed to depend on functions that occur above them on the page. Generally people read such code starting at the bottom, because it is easier to understand the outline provided by high-level functions, instead of getting lost indetails of low-level funcitons.
+
+bottom-up style explained by a master: http://paulgraham.com/progbot.html
+
+###Why is this code so short?
+
+http://paulgraham.com/power.html
+
 ###What are the priorities that shape coding-style?
 
 1)  It should be a secure cryptocurrency.
 
-2)  The part of the code that can change state is kept as small as possible. add_block and delete_block are the only functions that write to the database. The mental-size of a program is largely determined by how many parts of the program can alter the database.
+2)  The mental-size of a program is largely determined by how many parts of the program can alter the database. Hierarchy of who controls the blockchain:
+
+    blockchain.db_put() and blockchain.db_delete() are low level functions that change the blockchain.
+    blockchain.add_block() and blockchain.delete_block() are the only functions that use db_put and db_delete
+    consensus.mainloop() is the only thread which uses add_block and delete_block().
 
 3)  It should be easy to create altcoins with new features just by adding transactions types to the transactions.py file.
 

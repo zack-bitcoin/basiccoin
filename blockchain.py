@@ -10,10 +10,11 @@ def db_get (n, DB):
     return tools.unpackage(a)
 def db_put(key, dic, DB):  
     key=str(key)
-    if len(key)==130: key=tools.pub2addr(key)
+    if len(key)==130: key=tools.pub2addr(key)#store by pubkey hash instead of pubkey to defend against theoretical quantum computing attack.
     return DB['db'].Put(key, tools.package(dic))
 def db_delete(key, DB): return DB['db'].Delete(str(key))
 def count(pubkey, DB):
+    #returns the number of transactions that pubkey has broadcast.
     def zeroth_confirmation_txs(pubkey, DB):
         c=0
         try:
@@ -37,6 +38,7 @@ def count(pubkey, DB):
         return acc['count']
     return current(pubkey, DB)+zeroth_confirmation_txs(pubkey, DB)
 def add_tx(tx, DB):
+    #Attempt to add a new transaction into the pool to be included in the next block.
     tx_check=transactions.tx_check
     def verify_count(tx, txs): return tx['count']!=count(tx['id'], DB)
     def type_check(tx, txs): return type(tx) != type({'a':1}) or 'type' not in tx or tx['type'] not in tx_check
@@ -52,6 +54,7 @@ def add_tx(tx, DB):
 targets={}
 times={}#stores blocktimes
 def recent_blockthings(key, DB, size=100, length=0):
+    #Grabs info from old blocks. If key=='time' we grab a bunch of blocktimes. if key=='target' we grab a bunch of targets.
     if key=='time': storage=times
     if key=='target': storage=targets
     def get_val(length):
@@ -63,11 +66,13 @@ def recent_blockthings(key, DB, size=100, length=0):
     start= (length-size) if (length-size)>=0 else 0
     return map(get_val, range(start, length))
 def buffer(str):
+    #target is supposed to be 64 characters long
     if len(str)<64: return buffer('0'+str)
     return str
-def hexSum(a, b): return buffer(str(hex(int(a, 16)+int(b, 16)))[2:-1])
+def hexSum(a, b): return buffer(str(hex(int(a, 16)+int(b, 16)))[2:-1])#sum numbers expressed as hexidecimal strings
 def hexInvert(n): return buffer(str(hex(int('f'*128, 16)/int(n, 16)))[2:-1])#use double-size for division, to reduce information leakage.
 def target(DB, length=0):
+    #returns the target difficulty at a paticular blocklength.
     inflection=0.985#This constant is selected such that the 50 most recent blocks count for 1/2 the total weight.
     history_length=400#How far back in history do we compute the target from.
     if length==0: length=DB['length']
@@ -96,6 +101,7 @@ def target(DB, length=0):
         return sum([w[i]*blocklengths[i]/tw for i in range(len(blocklengths))])
     return targetTimesFloat(estimate_target(DB), estimate_time(DB)/custom.blocktime(length))
 def add_block(block, DB):
+    #attempts adding a new block to the blockchain.
     def median(mylist): #median is good for weeding out liars, so long as the liars don't have 51% hashpower.
         if len(mylist)<1: return 0
         return sorted(mylist)[len(mylist) / 2]
@@ -135,6 +141,7 @@ def add_block(block, DB):
         for tx in orphans:
             add_tx(tx, DB)
 def delete_block(DB):
+    #removes the most recent block from the blockchain.
     if DB['length']<0: return
     try:
         targets.pop(str(length))

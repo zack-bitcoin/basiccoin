@@ -1,5 +1,5 @@
 import networking, custom, tools, leveldb, shutil, time, blockchain
-#Sometimes peers ask us for infomation or push new info to us. This file explains how we respond.
+#Sometimes peers ask us for infomation or push new transactions or blocks to us. This file explains how we respond.
 def main(dic, DB):
     def security_check(dic):
         if 'version' not in dic or dic['version']!=custom.version:

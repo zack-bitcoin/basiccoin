@@ -1,4 +1,5 @@
 import networking, copy, tools, pt, os, blockchain, custom, http
+#the easiest way to understand this file is to try it out and have a look at the html it creates. It creates a very simple page that allows you to spend money.
 def spend(amount, pubkey, privkey, to_pubkey, DB):
     amount=int(amount*(10**5))
     tx={'type':'spend', 'id':pubkey, 'amount':amount, 'to':to_pubkey}

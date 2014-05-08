@@ -1,6 +1,7 @@
 import blockchain, custom, tools, networking, random, time, copy
 #This file mines blocks and talks to peers. It maintains consensus of the blockchain.
 def mine(hashes_till_check, reward_address, DB):
+    #tries to mine the next block hashes_till_check many times.
     def make_mint(pubkey, DB): return {'type':'mint', 'id':pubkey, 'count':blockchain.count(pubkey, DB)}
     def genesis(pubkey, DB):
         target=blockchain.target(DB)
@@ -50,6 +51,7 @@ def mine(hashes_till_check, reward_address, DB):
     block=POW(block, hashes_till_check, blockchain.target(DB, block['length']))
     DB['suggested_blocks'].append(block)
 def peers_check(peers, DB):
+    #check on the peers to see if they know about more blocks than we do.
     def fork_check(newblocks, DB):
         #if we are on a fork, return True
         try:
@@ -109,6 +111,7 @@ def peers_check(peers, DB):
     for peer in peers:
         peer_check(peer, DB)
 def suggestions(DB):
+    #the other thread called listener.server is listening to peers and adding suggested transactions and blocks from them into these lists of suggestions. 
     [blockchain.add_tx(tx, DB) for tx in DB['suggested_txs']]
     [blockchain.add_block(block, DB) for block in DB['suggested_blocks']]
     DB['suggested_txs']=[]
