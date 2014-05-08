@@ -37,7 +37,7 @@ The purpose of basiccoin is to be the simplest secure currency possible. Current
 
 ###How do I read this?
 
-This code is written functionally. Functions are only supposed to depend on functions that occur above them on the page. Generally people read such code starting at the bottom, because it is easier to understand the outline provided by high-level functions, instead of getting lost indetails of low-level funcitons.
+This code is written functionally. Functions are only supposed to depend on functions that occur above them on the page. Generally people read such code starting at the bottom, because it is easier to understand the outline provided by high-level functions, instead of getting lost indetails of low-level functions.
 
 bottom-up style explained by a master: http://paulgraham.com/progbot.html
 
