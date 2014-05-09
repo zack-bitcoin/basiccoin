@@ -102,11 +102,11 @@ def peers_check(peers, DB):
             for push in pushers:
                 cmd({'type':'pushtx', 'tx':push})
             return []
-        start=length-30
+        start=length-2
         if start<0:
             start=0
-        if ahead>500:
-            end=length+499
+        if ahead>custom.download_many:
+            end=length+custom.doanload_many-1
         else:
             end=block_count['length']
         blocks= cmd({'type':'rangeRequest', 

@@ -7,6 +7,18 @@ version="VERSION"
 block_reward=10**5
 premine=5*10**6
 fee=10**3
+timer_start_median=100#lower limits on what
+#the "time" tag in a block can say. Take the median
+#of this many of the blocks.
+history_length=400#how far back in history do
+#we look when we use statistics to guess at 
+#the current blocktime and difficulty.
+inflection=0.985#This constant is selected such 
+#that the 50 most recent blocks count for 1/2 the 
+#total weight.
+download_many=500#max number of blocks to request
+#from a peer at the same time.
+max_download=50000
 brainwallet='brain wallet'
 privkey=pt.sha256(brainwallet)
 pubkey=pt.privtopub(privkey)

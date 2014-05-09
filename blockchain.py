@@ -3,7 +3,7 @@ import time, copy, custom, tools, networking, transactions
 #adding blocks and transactions.
 def db_get(n, DB): 
     n=str(n)
-    if len(n)==130: 
+    if len(n)==130: #130 is the length of a ECDSA public key.
         n=tools.pub2addr(n)
         try:
             a=DB['db'].Get(n)
@@ -55,7 +55,7 @@ def add_tx(tx, DB):
 targets={}
 times={}#stores blocktimes
 
-def recent_blockthings(key, DB, size=100, length=0):
+def recent_blockthings(key, DB, size, length=0):
     #Grabs info from old blocks.
     if key=='time': storage=times
     if key=='target': storage=targets
@@ -83,9 +83,6 @@ def hexInvert(n): return buffer(str(hex(int('f'*128, 16)/int(n, 16)))[2:-1])
 
 def target(DB, length=0):
     #returns the target difficulty at a paticular blocklength.
-    inflection=0.985#This constant is selected such that the 50 most recent 
-                    #blocks count for 1/2 the total weight.
-    history_length=400#How far back in history do we compute the target from.
     if length==0: length=DB['length']
     if length<4: return '0'*4+'f'*60#use same difficulty for first few blocks.
     if length<=DB['length']: return targets[str(length)]#memoized
@@ -93,7 +90,7 @@ def target(DB, length=0):
     def targetTimesFloat(target, number): 
         return buffer(str(hex(int(int(target, 16)*number)))[2:-1])
         
-    def weights(length): return [inflection**(length-i) for i in range(length)]
+    def weights(length): return [custom.inflection**(length-i) for i in range(length)]
     
     def estimate_target(DB):
         #We are actually interested in the average number of hashes requred
@@ -106,7 +103,7 @@ def target(DB, length=0):
                 l=[hexSum(l[0], l[1])]+l[2:]
             return l[0]
             
-        targets=recent_blockthings('target', DB, history_length)        
+        targets=recent_blockthings('target', DB, custom.history_length)        
         w=weights(len(targets))
         tw=sum(w)
         targets=map(hexInvert, targets)
@@ -115,7 +112,7 @@ def target(DB, length=0):
         return hexInvert(sumTargets(weighted_targets))
         
     def estimate_time(DB):
-        times=recent_blockthings('time', DB, history_length)
+        times=recent_blockthings('time', DB, custom.history_length)
         blocklengths=[times[i]-times[i-1] for i in range(1, len(times))]
         w=weights(len(blocklengths))#geometric weighting
         tw=sum(w)#normalization constant
@@ -152,7 +149,7 @@ def add_block(block, DB):
         half_way={u'nonce':block['nonce'], u'halfHash':tools.det_hash(a)}
         if tools.det_hash(half_way)>block['target']: return False
         if block['target']!=target(DB, block['length']): return False
-        earliest=median(recent_blockthings('time', DB))
+        earliest=median(recent_blockthings('time', DB, custom.timer_start_median))
         if 'time' not in block: return False
         if block['time']>time.time(): return False
         if block['time']<earliest: return False
