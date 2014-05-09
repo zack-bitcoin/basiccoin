@@ -1,4 +1,4 @@
-import pt
+import tools
 #This is for easy customization of new currencies.
 database_name='DB.db'
 listen_port=8900
@@ -20,8 +20,8 @@ download_many=500#max number of blocks to request
 #from a peer at the same time.
 max_download=50000
 brainwallet='brain wallet'
-privkey=pt.sha256(brainwallet)
-pubkey=pt.privtopub(privkey)
+privkey=tools.sha256(brainwallet)
+pubkey=tools.privtopub(privkey)
 peers=[['localhost', 8901],
        ['localhost', 8902],
        ['localhost', 8903],

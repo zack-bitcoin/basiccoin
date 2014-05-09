@@ -1,4 +1,4 @@
-import networking, copy, tools, pt, os, blockchain, custom, http
+import networking, copy, tools, os, blockchain, custom, http
 #the easiest way to understand this file is to try it out and have a look at 
 #the html it creates. It creates a very simple page that allows you to spend 
 #money.
@@ -9,12 +9,12 @@ def spend(amount, pubkey, privkey, to_pubkey, DB):
 
 def easy_add_transaction(tx_orig, privkey, DB):
     tx=copy.deepcopy(tx_orig)
-    pubkey=pt.privtopub(privkey)
+    pubkey=tools.privtopub(privkey)
     try:
         tx['count']=blockchain.count(pubkey, DB)
     except:
         tx['count']=1
-    tx['signature']=pt.ecdsa_sign(tools.det_hash(tx), privkey)
+    tx['signature']=tools.sign(tools.det_hash(tx), privkey)
     blockchain.add_tx(tx, DB)
 
 submit_form='''
@@ -41,11 +41,11 @@ def page1(DB, brainwallet=custom.brainwallet):
 
 def home(DB, dic):
     if 'BrainWallet' in dic:
-        dic['privkey']=pt.sha256(dic['BrainWallet'])
+        dic['privkey']=tools.sha256(dic['BrainWallet'])
     elif 'privkey' not in dic:
         return "<p>You didn't type in your brain wallet.</p>"
     privkey=dic['privkey']
-    pubkey=pt.privtopub(dic['privkey'])
+    pubkey=tools.privtopub(dic['privkey'])
     if 'do' in dic.keys():
         if dic['do']=='spend':
             spend(float(dic['amount']), pubkey, privkey, dic['to'], DB)
