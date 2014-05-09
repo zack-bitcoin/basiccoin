@@ -1,7 +1,15 @@
 import hashlib, pt
 from json import dumps as package, loads as unpackage
 
-def pub2addr(x): return pt.pubtoaddr(x)
+def pub2addr(pubkey): return pt.pubtoaddr(pubkey)
+
+def sha256(x): return pt.sha256(x)
+
+def sign(msg, privkey): pt.ecdsa_sign(msg, privkey)
+
+def verify(msg, sig, pubkey): return pt.ecdsa_verify(msg, sig, pubkey)
+
+def privtopub(privkey): return pt.privtopub(privkey)
 
 def det_hash(x):#deterministically takes sha256 of dict, list, int, or string
 
