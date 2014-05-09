@@ -1,26 +1,32 @@
-import blockchain, custom, tools, networking, random, time, copy
-#This file mines blocks and talks to peers. It maintains consensus of the blockchain.
-def mine(hashes_till_check, reward_address, DB):
+def mine(hashes_till_check, reward_address, recent_block):
     #tries to mine the next block hashes_till_check many times.
-    def make_mint(pubkey, DB): return {'type':'mint', 'id':pubkey, 
-                                       'count':blockchain.count(pubkey, DB)}
-                                       
+    def hexSum(a, b): 
+        return buffer(str(hex(int(a, 16)+int(b, 16)))[2:-1])
+
+    def hexInvert(n): 
+        return buffer(str(hex(int('f'*128, 16)/int(n, 16)))[2:-1])
+
+    def make_mint(pubkey, recent_block): 
+        return {'type':'mint', 'id':pubkey, 
+                'count':
+                blockchain.count(pubkey, DB)}
+
     def genesis(pubkey, DB):
         target=blockchain.target(DB)
         out={'version':custom.version,
              'length':0,
              'time':time.time(),
              'target':target,
-             'diffLength':blockchain.hexInvert(target),
+             'diffLength':hexInvert(target),
              'txs':[make_mint(pubkey, DB)]}
         out=tools.unpackage(tools.package(out))
         return out
-        
+
     def make_block(prev_block, txs, pubkey, DB):
         leng=int(prev_block['length'])+1
-        target=blockchain.target(DB, leng)
-        diffLength=blockchain.hexSum(prev_block['diffLength'], 
-                                     blockchain.hexInvert(target))
+        target=target(DB, leng)
+        diffLength=hexSum(prev_block['diffLength'], 
+                          blockchain.hexInvert(target))
         out={'version':custom.version,
              'txs':txs+[make_mint(pubkey, DB)],
              'length':leng,
@@ -55,11 +61,11 @@ def mine(hashes_till_check, reward_address, DB):
         prev_block=blockchain.db_get(length, DB)
         txs=DB['txs']
         block=make_block(prev_block, txs, reward_address, DB)
-    block=POW(block, hashes_till_check, blockchain.target(DB, block['length']))
+    block=POW(block, hashes_till_check, 
+              blockchain.target(DB, block['length']))
     DB['suggested_blocks'].append(block)
-
-def peers_check(peers, DB):
-    #check on the peers to see if they know about more blocks than we do.
+def peers_check(peers, recent_block):
+    '''
     def fork_check(newblocks, DB):
         #if we are on a fork, return True
         try:
@@ -70,7 +76,7 @@ def peers_check(peers, DB):
         except Exception as e:
             #print('ERROR: ' +str(e))
             return False
-            
+    '''
     def peer_check(peer, DB):
         cmd=(lambda x: networking.send_command(peer, x))
         block_count=cmd({'type':'blockCount'})
@@ -78,6 +84,11 @@ def peers_check(peers, DB):
             return 
         if 'error' in block_count.keys():
             return         
+        spot=block_count['length']
+        return cmd({'type':'rangeRequest',
+                    'range':[spot, spot]})[0]
+
+        '''
         length=copy.deepcopy(DB['length'])
         us=copy.deepcopy(DB['diffLength'])
         them=block_count['diffLength']
@@ -119,25 +130,11 @@ def peers_check(peers, DB):
             blockchain.delete_block(DB)
         for block in blocks:
             DB['suggested_blocks'].append(block)
-            
-    for peer in peers:
-        peer_check(peer, DB)
+        ''' 
+    peer = peers[random.randint(0,len(peers)-1)]
+    return peer_check(peer, recent_block)
 
-def suggestions(DB):
-    #the other thread called listener.server is listening to peers and adding 
-    #suggested transactions and blocks from them into these lists of 
-    #suggestions. 
-    [blockchain.add_tx(tx, DB) for tx in DB['suggested_txs']]
-    [blockchain.add_block(block, DB) for block in DB['suggested_blocks']]
-    DB['suggested_txs']=[]
-    DB['suggested_blocks']=[]
-
-def mainloop(reward_address, peers, hashes_till_check, DB):
+def mainloop(reward_address, peers, hashes_till_check, recent_block):
     while True:
-        #mine(hashes_till_check, reward_address, DB) 
-        peers_check(peers, DB)
-        suggestions(DB)
-
-def miner(reward_address, peers, hashes_till_check, DB):
-    while True: 
-        mine(hashes_till_check, reward_address, DB)
+        mine(hashes_till_check, reward_address, recent_block)
+        recent_block=peers_check(peers, recent_block)

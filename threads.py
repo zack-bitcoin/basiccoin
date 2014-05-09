@@ -9,10 +9,14 @@ DB={'db':db,
     'suggested_blocks':[], 
     'suggested_txs':[], 
     'diffLength':'0'}
-#mines blocks, keeps track of blockchain database, checks on peers for new 
+#mines blocks
+todo=[
+    [consensus.miner, 
+     (custom.pubkey, custom.peers, custom.hashes_per_check, DB), False],
+#keeps track of blockchain database, checks on peers for new 
 #blocks and transactions.
-todo=[[consensus.mainloop, 
-       (custom.pubkey, custom.peers, custom.hashes_per_check, DB), False],
+    [consensus.mainloop, 
+     (custom.pubkey, custom.peers, custom.hashes_per_check, DB), False],
 #listens for peers. Peers might ask us for our blocks and our pool of recent 
 #transactions, or peers could suggest blocks and transactions to us.
       [listener.server, (DB, ), False],
