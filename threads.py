@@ -11,8 +11,8 @@ DB={'db':db,
     'diffLength':'0'}
 #mines blocks
 todo=[
-    [consensus.miner, 
-     (custom.pubkey, custom.peers, custom.hashes_per_check, DB), False],
+#    [consensus.miner, 
+#     (custom.pubkey, custom.peers, custom.hashes_per_check, DB), False],
 #keeps track of blockchain database, checks on peers for new 
 #blocks and transactions.
     [consensus.mainloop, 

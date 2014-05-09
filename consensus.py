@@ -134,10 +134,11 @@ def suggestions(DB):
 
 def mainloop(reward_address, peers, hashes_till_check, DB):
     while True:
-        #mine(hashes_till_check, reward_address, DB) 
+        mine(hashes_till_check, reward_address, DB) 
         peers_check(peers, DB)
         suggestions(DB)
-
+'''
 def miner(reward_address, peers, hashes_till_check, DB):
     while True: 
-        mine(hashes_till_check, reward_address, DB)
+        #mine(hashes_till_check, reward_address, DB)
+'''
