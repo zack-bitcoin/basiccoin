@@ -21,23 +21,26 @@ def db_put(key, dic, DB):
 
 def db_delete(key, DB): return DB['db'].Delete(str(key))
 
-def count(pubkey, DB):
+def count(address, DB):
     #returns the number of transactions that pubkey has broadcast.
-    def zeroth_confirmation_txs(pubkey, DB): 
-        return len(filter(lambda t: pubkey==t['id'], DB['txs']))
-        
-    current=db_get(pubkey, DB)['count']
-    return current+zeroth_confirmation_txs(pubkey, DB)
+    def zeroth_confirmation_txs(address, DB): 
+        return len(filter(lambda t: address==tools.make_address(t['id'], len(t['signature'])), DB['txs']))
+    current=db_get(address, DB)['count']
+    return current+zeroth_confirmation_txs(address, DB)
 
 def add_tx(tx, DB):
     #Attempt to add a new transaction into the pool.
-    tx_check=transactions.tx_check
-    def verify_count(tx, txs): return tx['count']!=count(tx['id'], DB)
+    address=tools.make_address(tx['id'], len(tx['signature']))
+    #print('address: ' +str(address))
+    #if address in ['01907260ccad051d995b3566307b7b785b0ef04664ab027e8ad2a037c1522693',0x01907260ccad051d995b3566307b7b785b0ef04664ab027e8ad2a037c1522693]: error('here')
+    #print('tx: ' +str(tx))
+
+    def verify_count(tx, txs): return tx['count']!=count(address, DB)
     
     def tx_type_check(tx, txs): return type(tx) != type({'a':1})
     
     def type_check(tx, txs): 
-        return 'type' not in tx or tx['type'] not in tx_check
+        return 'type' not in tx or tx['type'] not in transactions.tx_check
         
     def too_big_block(tx, txs): 
         return len(tools.package(txs+[tx]))>networking.MAX_MESSAGE_SIZE-5000
@@ -48,13 +51,13 @@ def add_tx(tx, DB):
         if too_big_block(tx, txs): return False
         if 'start' in tx and DB['length']<tx['start']: return False
         if 'end' in tx and DB['length']>tx['end']: return False
-        return tx_check[tx['type']](tx, txs, DB)
+        #print('tx to transcations: ' +str(tx))
+        return transactions.tx_check[tx['type']](tx, txs, DB)
         
     if verify_tx(tx, DB['txs']): DB['txs'].append(tx)
 
 targets={}
 times={}#stores blocktimes
-
 def recent_blockthings(key, DB, size, length=0):
     #Grabs info from old blocks.
     if key=='time': storage=times

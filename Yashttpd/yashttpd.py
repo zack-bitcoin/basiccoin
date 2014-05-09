@@ -4,16 +4,20 @@ from json import dumps as package
 from constants import HTTP_VERS, HTTP_CODES
 from sys import stdout
 
+VERBOSE=False
+def print_(txt):
+    if VERBOSE: print(txt)
+
 def make_server(ip, port, conq):
     s = socket.socket()
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.bind((ip, port))
     s.listen(conq)
-    print "socket #%d listening @ %s:%d" % (s.fileno(), ip, port)
+    print_("socket #%d listening @ %s:%d" % (s.fileno(), ip, port))
     return s
 
 def pretty(dic):
-    print package(dic, sort_keys=True, indent=4)
+    print_(package(dic, sort_keys=True, indent=4))
 
 def parse_request(client, address, chunk):
     message = client.recv(chunk)
@@ -25,12 +29,12 @@ def parse_request(client, address, chunk):
     headers = [map(strip, line.split(':', 1)) for line in headers] 
     request_dict['headers'] = dict(headers)
     request_dict['message'] = message
-    print 'parsing request from', address
+    print_('parsing request from'+str(address))
     pretty(request_dict)
     return request_dict
 
 def send_response(client, address, response_dict):
-    print 'responding to', address
+    print_('responding to'+str(address))
     pretty(response_dict)
     code = response_dict['code']
     code_msg = HTTP_CODES[int(code)][0]
@@ -52,7 +56,7 @@ def serve_forever(ip, port, conq, chunk, handler):
         except KeyboardInterrupt:
             stdout.write("\r")
             stdout.flush()
-            print 'shutting down'
+            print_('shutting down')
             for sock in [c, s]:
                 try:
                     sock.shutdown(socket.SHUT_RDWR)

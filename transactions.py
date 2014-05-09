@@ -2,14 +2,28 @@ import blockchain, custom, copy, tools
 #This file explains how we tell if a transaction is valid or not, it explains 
 #how we update the system when new transactions are added to the blockchain.
 def spend_verify(tx, txs, DB): 
-    tx_copy=copy.copy(tx)
+    def sigs_match(sigs, pubs, msg):
+        for sig in sigs:
+            for pub in pubs:
+                try:
+                    if tools.verify(msg, sig, pub):
+                        sigs.remove(sig)
+                        pubs.remove(pub)
+                except:
+                    pass
+        return len(sigs)==0
+    tx_copy=copy.deepcopy(tx)
+    tx_copy_2=copy.deepcopy(tx)
     tx_copy.pop('signature')
+    if len(tx['id'])==0: return False
+    if len(tx['signature'])>len(tx['id']): return False
     msg=tools.det_hash(tx_copy)
-    if not tools.verify(msg, tx['signature'], tx['id']): return False
+    if not sigs_match(copy.deepcopy(tx['signature']), copy.deepcopy(tx['id']), msg): return False
     if tx['amount']<custom.fee: return False
-    if int(blockchain.db_get(tx['id'], DB)['amount'])<int(tx['amount']): 
-        return False
-    return True
+    address=tools.make_address(tx_copy_2['id'], len(tx_copy_2['signature']))
+    print('tx: ' +str(tx_copy_2))
+    print('address: ' +str(address))
+    return int(blockchain.db_get(address, DB)['amount'])>=int(tx['amount']) 
 
 def mint_verify(tx, txs, DB): 
     return 0==len(filter(lambda t: t['type']=='mint', txs))
@@ -22,23 +36,27 @@ def adjust(key, pubkey, amount, DB):
     blockchain.db_put(pubkey, acc, DB)
 
 def mint(tx, DB): 
-    adjust('amount', tx['id'], custom.block_reward, DB)
-    adjust('count', tx['id'], 1, DB)
+    address=tools.make_address(tx['id'], len(tx['signature']))
+    adjust('amount', address, custom.block_reward, DB)
+    adjust('count', address, 1, DB)
 
 def spend(tx, DB):
-    adjust('amount', tx['id'], -tx['amount'], DB)
+    address=tools.make_address(tx['id'], len(tx['signature']))
+    adjust('amount', address, -tx['amount'], DB)
     adjust('amount', tx['to'], tx['amount']-custom.fee, DB)
-    adjust('count', tx['id'], 1, DB)
+    adjust('count', address, 1, DB)
 add_block={'mint':mint, 'spend':spend}####
 #-----------------------------------------
 
 def unmint(tx, DB):
-    adjust('amount', tx['id'], -custom.block_reward, DB)
-    adjust('count', tx['id'], -1, DB)
+    address=tools.make_address(tx['id'], len(tx['signature']))
+    adjust('amount', address, -custom.block_reward, DB)
+    adjust('count', address, -1, DB)
     
 def unspend(tx, DB):
-    adjust('amount', tx['id'], tx['amount'], DB)
+    address=tools.make_address(tx['id'], len(tx['signature']))
+    adjust('amount', address, tx['amount'], DB)
     adjust('amount', tx['to'], custom.fee-tx['amount'], DB)
-    adjust('count', tx['id'], -1, DB)
+    adjust('count', address, -1, DB)
 delete_block={'mint':unmint, 'spend':unspend}####
 #------------------------------------------------

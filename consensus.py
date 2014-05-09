@@ -2,7 +2,7 @@ import blockchain, custom, tools, networking, random, time, copy
 #This file mines blocks and talks to peers. It maintains consensus of the blockchain.
 def mine(hashes_till_check, reward_address, DB):
     #tries to mine the next block hashes_till_check many times.
-    def make_mint(pubkey, DB): return {'type':'mint', 'id':pubkey, 
+    def make_mint(pubkey, DB): return {'type':'mint', 'id':[pubkey], 'signature':['first_sig'],
                                        'count':blockchain.count(pubkey, DB)}
                                        
     def genesis(pubkey, DB):
@@ -127,7 +127,11 @@ def suggestions(DB):
     #the other thread called listener.server is listening to peers and adding 
     #suggested transactions and blocks from them into these lists of 
     #suggestions. 
-    [blockchain.add_tx(tx, DB) for tx in DB['suggested_txs']]
+    for tx in DB['suggested_txs']:
+        #print('SUGGESTED TX')
+        #print('tx: ' +str(tx))
+        blockchain.add_tx(tx, DB)
+    #[blockchain.add_tx(tx, DB) for tx in DB['suggested_txs']]
     [blockchain.add_block(block, DB) for block in DB['suggested_blocks']]
     DB['suggested_txs']=[]
     DB['suggested_blocks']=[]
