@@ -1,4 +1,4 @@
-import hashlib, pt
+import pt, custom
 from json import dumps as package, loads as unpackage
 
 def pub2addr(pubkey): return pt.pubtoaddr(pubkey)
@@ -21,4 +21,4 @@ def det_hash(x):#deterministically takes sha256 of dict, list, int, or string
         
     def det(x): return {list: det_list, dict: det_dict}.get(type(x), str)(x)
     
-    return hashlib.sha256(det(unpackage(package(x)))).hexdigest()
+    return custom.hash_(det(unpackage(package(x))))

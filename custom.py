@@ -1,4 +1,4 @@
-import tools
+import tools, hashlib
 #This is for easy customization of new currencies.
 database_name='DB.db'
 listen_port=8900
@@ -28,7 +28,7 @@ peers=[['localhost', 8901],
        ['localhost', 8904],
        ['localhost', 8905]]
 hashes_per_check=10**5
-
+def hash_(x): return hashlib.sha256(x).hexdigest()
 def blocktime(length):
     if length*block_reward<premine:
         return 30
