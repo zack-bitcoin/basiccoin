@@ -30,9 +30,5 @@ while True:
         time.sleep(1)
     except KeyboardInterrupt:
         print('exiting')
-        try:
-            import os
-            os.system('killall python')
-        except: pass
         sys.exit(1)
     
