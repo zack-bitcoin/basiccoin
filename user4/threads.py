@@ -1,4 +1,4 @@
-import consensus, listener, threading, custom, blockchain, leveldb, gui, networking, time, sys
+import consensus, listener, threading, custom, blockchain, leveldb, gui, networking, time
 
 db=leveldb.LevelDB(custom.database_name)
 DB={'db':db, 
@@ -9,7 +9,10 @@ DB={'db':db,
     'suggested_blocks':[], 
     'suggested_txs':[], 
     'diffLength':'0'}
+#mines blocks
 todo=[
+#    [consensus.miner, 
+#     (custom.pubkey, custom.peers, custom.hashes_per_check, DB), False],
 #keeps track of blockchain database, checks on peers for new 
 #blocks and transactions.
     [consensus.mainloop, 
@@ -26,13 +29,4 @@ for i in todo:
     t.start()
 
 while True:
-    try:
-        time.sleep(1)
-    except KeyboardInterrupt:
-        print('exiting')
-        try:
-            import os
-            os.system('killall python')
-        except: pass
-        sys.exit(1)
-    
+    time.sleep(1)
