@@ -47,7 +47,7 @@ def add_tx(tx, DB):
         return tx['count'] != count(address, DB)
 
     def tx_type_check(tx, txs):
-        return type(tx) != type({'a':1})
+        return type(tx) != type({'a': 1})
 
     def type_check(tx, txs):
         if 'type' not in tx:
@@ -116,7 +116,7 @@ def target(DB, length=0):
         length = DB['length']
     if length < 4:
         return '0' * 4 + 'f' * 60  # Use same difficulty for first few blocks.
-    if length<=DB['length']:
+    if length <= DB['length']:
         return targets[str(length)]  # Memoized
 
     def targetTimesFloat(target, number):
@@ -146,7 +146,7 @@ def target(DB, length=0):
 
         def weighted_multiply(i):
             return targetTimesFloat(targets[i], w[i]/tw)
-        weighted_targets=[weighted_multiply(i) for i in range(len(targets))]
+        weighted_targetsi = [weighted_multiply(i) for i in range(len(targets))]
         return hexInvert(sumTargets(weighted_targets))
 
     def estimate_time(DB):
@@ -163,7 +163,7 @@ def target(DB, length=0):
 def add_block(block, DB):
     # Attempts adding a new block to the blockchain.
     # Median is good for weeding out liars, so long as
-    def median(mylist): # the liars don't have 51% hashpower.
+    def median(mylist):  # the liars don't have 51% hashpower.
         if len(mylist) < 1:
             return 0
         return sorted(mylist)[len(mylist) / 2]
@@ -201,7 +201,7 @@ def add_block(block, DB):
         a.pop('nonce')
         if u'target' not in block.keys():
             return False
-        half_way = {u'nonce':block['nonce'], u'halfHash':tools.det_hash(a)}
+        half_way = {u'nonce': block['nonce'], u'halfHash': tools.det_hash(a)}
         if tools.det_hash(half_way) > block['target']:
             return False
         if block['target'] != target(DB, block['length']):
@@ -232,7 +232,7 @@ def add_block(block, DB):
 
 def delete_block(DB):
     # Removes the most recent block from the blockchain.
-    if DB['length']<0:
+    if DB['length'] < 0:
         return
     try: targets.pop(str(DB['length']))
     except: pass
@@ -251,5 +251,5 @@ def delete_block(DB):
     else:
         block = db_get(DB['length'], DB)
         DB['diffLength'] = db_get(DB['length'], DB)['diffLength']
-    for orphan in sorted(orphans, key = lambda x: x['count']):
+    for orphan in sorted(orphans, key=lambda x: x['count']):
         add_tx(tx, DB)
