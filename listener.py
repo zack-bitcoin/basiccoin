@@ -1,5 +1,5 @@
-import networking, custom, tools, leveldb, shutil, time, blockchain
-#Sometimes peers ask us for infomation or push new transactions or blocks to 
+import networking, custom, tools, leveldb, blockchain
+#Sometimes peers ask us for information or push new transactions or blocks to
 #us. This file explains how we respond.
 def main(dic, DB):
     

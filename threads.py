@@ -1,4 +1,4 @@
-import consensus, listener, threading, custom, blockchain, leveldb, gui, networking, time, sys
+import consensus, listener, threading, custom, leveldb, gui, networking, time, sys
 
 db=leveldb.LevelDB(custom.database_name)
 DB={'db':db, 
