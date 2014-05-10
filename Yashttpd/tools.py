@@ -3,10 +3,12 @@ from json import dumps as package, loads as unpackage
 
 #def pub2addr(pubkey): return pt.pubtoaddr(pubkey)
 
+def sha256(x): return pt.sha256(x)
+
 def sign(msg, privkey): return pt.ecdsa_sign(msg, privkey)
 
 def verify(msg, sig, pubkey): 
-    #print('msg, sig, pubkey: ' +str(msg) + ' ' + str(sig) + ' ' + str(pubkey))
+    print('msg, sig, pubkey: ' +str(msg) + ' ' + str(sig) + ' ' + str(pubkey))
     return pt.ecdsa_verify(msg, sig, pubkey)
 
 def privtopub(privkey): return pt.privtopub(privkey)
@@ -37,5 +39,6 @@ def base58_encode(num):
     return encode
 
 def make_address(pubkeys, n): #n is the number of pubkeys required to spend from this address
-    if type(pubkeys) != list: pubkeys=[pubkeys]
-    return str(len(pubkeys))+str(n)+base58_encode(det_hash({str(n):pubkeys}))[0:29]
+    if len(pubkeys)==1: char='1'
+    else: char='3'
+    return char+base58_encode(det_hash({str(n):pubkeys}))

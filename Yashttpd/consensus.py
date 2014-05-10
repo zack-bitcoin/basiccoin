@@ -2,10 +2,8 @@ import blockchain, custom, tools, networking, random, time, copy
 #This file mines blocks and talks to peers. It maintains consensus of the blockchain.
 def mine(hashes_till_check, reward_address, DB):
     #tries to mine the next block hashes_till_check many times.
-    def make_mint(pubkey, DB): 
-        address=tools.make_address([reward_address], 1)
-        return {'type':'mint', 'id':[pubkey], 'signature':['first_sig'],
-                'count':blockchain.count(address, DB)}
+    def make_mint(pubkey, DB): return {'type':'mint', 'id':[pubkey], 'signature':['first_sig'],
+                                       'count':blockchain.count(pubkey, DB)}
                                        
     def genesis(pubkey, DB):
         target=blockchain.target(DB)
@@ -68,6 +66,8 @@ def peers_check(peers, DB):
         length=copy.deepcopy(DB['length'])
         block=blockchain.db_get(length, DB)
         recent_hash=tools.det_hash(block)
+        print('recent_hash: ' +str(recent_hash))
+        print('other: ' +str(map(tools.det_hash, newblocks)))
         their_hashes=map(tools.det_hash, newblocks)
         return recent_hash not in map(tools.det_hash, newblocks)
         #except Exception as e:

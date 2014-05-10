@@ -10,9 +10,8 @@ def spend(amount, pubkey, privkey, to_pubkey, DB):
 def easy_add_transaction(tx_orig, privkey, DB):
     tx=copy.deepcopy(tx_orig)
     pubkey=tools.privtopub(privkey)
-    address=tools.make_address([pubkey], 1)
     try:
-        tx['count']=blockchain.count(address, DB)
+        tx['count']=blockchain.count(pubkey, DB)
     except:
         tx['count']=1
     tx['signature']=[tools.sign(tools.det_hash(tx), privkey)]
@@ -43,21 +42,21 @@ def page1(DB, brainwallet=custom.brainwallet):
 
 def home(DB, dic):
     if 'BrainWallet' in dic:
-        dic['privkey']=tools.det_hash(dic['BrainWallet'])
+        dic['privkey']=tools.sha256(dic['BrainWallet'])
     elif 'privkey' not in dic:
         return "<p>You didn't type in your brain wallet.</p>"
     privkey=dic['privkey']
     pubkey=tools.privtopub(dic['privkey'])
-    address=tools.make_address(pubkey, 1)
     if 'do' in dic.keys():
         if dic['do']=='spend':
             spend(float(dic['amount']), pubkey, privkey, dic['to'], DB)
     out=empty_page
+    address=tools.make_address([pubkey], 1)
     out=out.format('<p>your address: ' +str(address)+'</p>{}')
     out=out.format('<p>current block: ' +str(DB['length'])+'</p>{}')
     balance=blockchain.db_get(address, DB)['amount']
     for tx in DB['txs']:
-        if tx['type'] == 'spend' and tx['to'] == address:
+        if tx['type'] == 'spend' and tx['to'] == tools.pub2addr(pubkey):
             balance += tx['amount']
         if tx['type'] == 'spend' and tx['id'][0] == pubkey:
             balance -= tx['amount']

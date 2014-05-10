@@ -3,6 +3,8 @@ import time, copy, custom, tools, networking, transactions
 #adding blocks and transactions.
 def db_get(n, DB): 
     n=str(n)
+    #if len(n)==130: #130 is the length of a ECDSA public key.
+    #    n=tools.make_address(n)
     try:
         return tools.unpackage(DB['db'].Get(n))
     except:
@@ -10,27 +12,29 @@ def db_get(n, DB):
         #having zero money, and having broadcast zero transcations.
         return db_get(n, DB)
 
-def db_put(key, dic, DB): 
-    return DB['db'].Put(str(key), tools.package(dic))
+def db_put(key, dic, DB):  
+    key=str(key)
+    #if len(key)==130: key=tools.pub2addr(key)#store by pubkey hash instead of 
+    #pubkey to defend against theoretical quantum computing attack.
+    return DB['db'].Put(key, tools.package(dic))
 
 def db_delete(key, DB): return DB['db'].Delete(str(key))
 
 def count(address, DB):
     #returns the number of transactions that pubkey has broadcast.
-
     def zeroth_confirmation_txs(address, DB): 
-        def func(t): address==tools.make_address(t['id'], len(t['signature']))
-        return len(filter(func, DB['txs']))
-
+        return len(filter(lambda t: address==tools.make_address(t['id'], len(t['signature'])), DB['txs']))
     current=db_get(address, DB)['count']
     return current+zeroth_confirmation_txs(address, DB)
 
 def add_tx(tx, DB):
     #Attempt to add a new transaction into the pool.
     address=tools.make_address(tx['id'], len(tx['signature']))
+    #print('address: ' +str(address))
+    #if address in ['01907260ccad051d995b3566307b7b785b0ef04664ab027e8ad2a037c1522693',0x01907260ccad051d995b3566307b7b785b0ef04664ab027e8ad2a037c1522693]: error('here')
+    #print('tx: ' +str(tx))
 
-    def verify_count(tx, txs): 
-        return tx['count']!=count(address, DB)
+    def verify_count(tx, txs): return tx['count']!=count(address, DB)
     
     def tx_type_check(tx, txs): return type(tx) != type({'a':1})
     
@@ -42,7 +46,6 @@ def add_tx(tx, DB):
         
     def verify_tx(tx, txs):
         if type_check(tx, txs): return False
-        if tx in txs: return False
         if verify_count(tx, txs): return False
         if too_big_block(tx, txs): return False
         if 'start' in tx and DB['length']<tx['start']: return False

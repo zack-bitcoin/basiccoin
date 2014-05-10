@@ -33,7 +33,7 @@ At the time of writing this there exist over 80 cryptocurrencies with market cap
 Bitcoin currently has 40445 lines of C++ and assembly, not including gui or tests. Very few people are able to read bitcoin. It is incredibly difficulty to adapt without breaking everything. Because of how hard it is to adapt bitcoin, all the altcoins have been very simplistic. They change magic numbers, and the name, and little else.
 
 When things get complicated, it is good to return to the basics.
-The purpose of basiccoin is to be the simplest secure currency possible. Currently about 550 lines of python, and getting smaller. Basiccoin is designed to be easily modified to create new alts.
+The purpose of basiccoin is to be the simplest secure currency possible. Basiccoin is designed to be easily modified to create new alts.
 
 ###How do I read this?
 
