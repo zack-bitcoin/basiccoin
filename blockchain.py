@@ -192,7 +192,7 @@ def add_block(block, DB):
         if int(block['length']) != int(length) + 1:
             return False
         if block['diffLength'] != hexSum(DB['diffLength'],
-                                       hexInvert(block['target'])):
+                                         hexInvert(block['target'])):
             return False
         if length >= 0:
             if tools.det_hash(db_get(length, DB)) != block['prevHash']:
