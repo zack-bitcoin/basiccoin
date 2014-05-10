@@ -15,6 +15,7 @@ def mine(hashes_till_check, reward_address, DB):
              'target':target,
              'diffLength':blockchain.hexInvert(target),
              'txs':[make_mint(pubkey, DB)]}
+        print('out: ' +str(out))
         out=tools.unpackage(tools.package(out))
         return out
         
@@ -114,8 +115,9 @@ def peers_check(peers, DB):
         if 'error' in block_count.keys():
             return
         length=DB['length']
-        us=DB['diffLength']
-        them=block_count['diffLength']
+        size=max(len(DB['diffLength']), len(block_count['diffLength']))
+        us=tools.buffer_(DB['diffLength'], size)
+        them=tools.buffer_(block_count['diffLength'], size)
         if them < us: return give_block(peer, DB, block_count)
         if us == them: return ask_for_txs(peer, DB)
         return download_blocks(peer, DB, block_count, length)

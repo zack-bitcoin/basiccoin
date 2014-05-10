@@ -69,16 +69,11 @@ def recent_blockthings(key, DB, size, length=0):
     start= (length-size) if (length-size)>=0 else 0
     return map(get_val, range(start, length))
 
-def buffer(str):
-    #target is supposed to be 64 characters long
-    if len(str)<64: return buffer('0'+str)
-    return str
-
 #sum of numbers expressed as hexidecimal strings
-def hexSum(a, b): return buffer(str(hex(int(a, 16)+int(b, 16)))[2:-1])
+def hexSum(a, b): return tools.buffer_(str(hex(int(a, 16)+int(b, 16)))[2:-1], 64)
 
 #use double-size for division, to reduce information leakage.
-def hexInvert(n): return buffer(str(hex(int('f'*128, 16)/int(n, 16)))[2:-1])
+def hexInvert(n): return tools.buffer_(str(hex(int('f'*128, 16)/int(n, 16)))[2:-1], 64)
 
 def target(DB, length=0):
     #returns the target difficulty at a paticular blocklength.
@@ -87,7 +82,9 @@ def target(DB, length=0):
     if length<=DB['length']: return targets[str(length)]#memoized
     
     def targetTimesFloat(target, number): 
-        return buffer(str(hex(int(int(target, 16)*number)))[2:-1])
+        a=int(str(target), 16)
+        b=int(a*number)
+        return tools.buffer_(str(hex(b))[2:-1], 64)
         
     def weights(length): return [custom.inflection**(length-i) for i in range(length)]
     
@@ -141,11 +138,15 @@ def add_block(block, DB):
                 else:
                     return True#block is invalid
             return True#block is invalid
-        if 'error' in block: return False
-        if type(block)!=type({'a':1}): return False
-        if 'length' not in block: return False
+        if type(block)!=type({'a':1}): 
+            return False
+        if 'error' in block:
+            return False
+        if 'length' not in block:
+            return False
         length=DB['length']
-        if int(block['length'])!=int(length)+1: return False
+        if int(block['length'])!=int(length)+1: 
+            return False
         if block['diffLength']!=hexSum(DB['diffLength'], 
                                        hexInvert(block['target'])): 
             return False
@@ -154,15 +155,22 @@ def add_block(block, DB):
                 return False
         a=copy.deepcopy(block)
         a.pop('nonce')
-        if u'target' not in block.keys(): return False
+        if u'target' not in block.keys(): 
+            return False
         half_way={u'nonce':block['nonce'], u'halfHash':tools.det_hash(a)}
-        if tools.det_hash(half_way)>block['target']: return False
-        if block['target']!=target(DB, block['length']): return False
+        if tools.det_hash(half_way)>block['target']: 
+            return False
+        if block['target']!=target(DB, block['length']): 
+            return False
         earliest=median(recent_blockthings('time', DB, custom.mmm))
-        if 'time' not in block: return False
-        if block['time']>time.time(): return False
-        if block['time']<earliest: return False
-        if tx_check(block['txs']): return False
+        if 'time' not in block: 
+            return False
+        if block['time']>time.time(): 
+            return False
+        if block['time']<earliest: 
+            return False
+        if tx_check(block['txs']): 
+            return False
         return True
         
     if block_check(block, DB):

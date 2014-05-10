@@ -1,6 +1,8 @@
 import blockchain, custom, copy, tools
 #This file explains how we tell if a transaction is valid or not, it explains 
 #how we update the system when new transactions are added to the blockchain.
+def addr(tx): return tools.make_address(tx['pubkeys'], len(tx['signatures']))
+
 def spend_verify(tx, txs, DB): 
 
     def sigs_match(sigs, pubs, msg):
@@ -22,10 +24,13 @@ def spend_verify(tx, txs, DB):
     msg=tools.det_hash(tx_copy)
     if not sigs_match(copy.deepcopy(tx['signatures']), copy.deepcopy(tx['pubkeys']), msg): return False
     if tx['amount']<custom.fee: return False
-    address=tools.make_address(tx_copy_2['pubkeys'], len(tx_copy_2['signatures']))
+    address=addr(tx_copy_2)
     total_cost=0
-    for Tx in filter(lambda t: tx['pubkeys']==t['pubkeys'], [tx]+txs):
-        total_cost+=Tx['amount']
+    for Tx in filter(lambda t: address==addr(t), [tx]+txs):
+        if Tx['type']=='spend':
+            total_cost+=Tx['amount']
+        if Tx['type']=='mint':
+            total_cost-=custom.block_reward
     return int(blockchain.db_get(address, DB)['amount'])>=total_cost
 
 def mint_verify(tx, txs, DB): 
@@ -39,12 +44,12 @@ def adjust(key, pubkey, amount, DB):
     blockchain.db_put(pubkey, acc, DB)
 
 def mint(tx, DB): 
-    address=tools.make_address(tx['pubkeys'], len(tx['signatures']))
+    address=addr(tx)
     adjust('amount', address, custom.block_reward, DB)
     adjust('count', address, 1, DB)
 
 def spend(tx, DB):
-    address=tools.make_address(tx['pubkeys'], len(tx['signatures']))
+    address=addr(tx)
     adjust('amount', address, -tx['amount'], DB)
     adjust('amount', tx['to'], tx['amount']-custom.fee, DB)
     adjust('count', address, 1, DB)
@@ -52,12 +57,12 @@ add_block={'mint':mint, 'spend':spend}####
 #-----------------------------------------
 
 def unmint(tx, DB):
-    address=tools.make_address(tx['pubkeys'], len(tx['signatures']))
+    address=addr(tx)
     adjust('amount', address, -custom.block_reward, DB)
     adjust('count', address, -1, DB)
     
 def unspend(tx, DB):
-    address=tools.make_address(tx['pubkeys'], len(tx['signatures']))
+    address=addr(tx)
     adjust('amount', address, tx['amount'], DB)
     adjust('amount', tx['to'], custom.fee-tx['amount'], DB)
     adjust('count', address, -1, DB)

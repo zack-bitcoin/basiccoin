@@ -35,5 +35,8 @@ def base58_encode(num):
     return encode
 
 def make_address(pubkeys, n): #n is the number of pubkeys required to spend from this address
-    if type(pubkeys) != list: pubkeys=[pubkeys]
     return str(len(pubkeys))+str(n)+base58_encode(det_hash({str(n):pubkeys}))[0:29]
+
+def buffer_(str, size):
+    if len(str)<size: return buffer_('0'+str, size)
+    return str

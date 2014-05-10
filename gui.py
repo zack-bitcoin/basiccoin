@@ -48,7 +48,7 @@ def home(DB, dic):
         return "<p>You didn't type in your brain wallet.</p>"
     privkey=dic['privkey']
     pubkey=tools.privtopub(dic['privkey'])
-    address=tools.make_address(pubkey, 1)
+    address=tools.make_address([pubkey], 1)
     if 'do' in dic.keys():
         if dic['do']=='spend':
             spend(float(dic['amount']), pubkey, privkey, dic['to'], DB)
