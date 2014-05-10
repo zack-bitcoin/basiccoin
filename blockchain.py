@@ -1,6 +1,8 @@
+""" This file explains how we talk to the database. It explains the rules for 
+    adding blocks and transactions.
+"""
 import time, copy, custom, tools, networking, transactions
-#this file explains how we talk to the database. It explains the rules for 
-#adding blocks and transactions.
+
 def db_get(n, DB): 
     n=str(n)
     try:
