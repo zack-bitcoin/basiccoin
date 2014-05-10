@@ -18,13 +18,13 @@ def mine(hashes_till_check, reward_address, DB):
                 'count': blockchain.count(address, DB)}
 
     def genesis(pubkey, DB):
-        target=blockchain.target(DB)
+        target = blockchain.target(DB)
         out = {'version': custom.version,
-             'length': 0,
-             'time': time.time(),
-             'target': target,
-             'diffLength': blockchain.hexInvert(target),
-             'txs': [make_mint(pubkey, DB)]}
+               'length': 0,
+               'time': time.time(),
+               'target': target,
+               'diffLength': blockchain.hexInvert(target),
+               'txs': [make_mint(pubkey, DB)]}
         print('out: ' + str(out))
         out = tools.unpackage(tools.package(out))
         return out
@@ -33,14 +33,14 @@ def mine(hashes_till_check, reward_address, DB):
         leng = int(prev_block['length']) + 1
         target = blockchain.target(DB, leng)
         diffLength = blockchain.hexSum(prev_block['diffLength'],
-                                     blockchain.hexInvert(target))
+                                       blockchain.hexInvert(target))
         out = {'version': custom.version,
-             'txs': txs + [make_mint(pubkey, DB)],
-             'length': leng,
-             'time': time.time(),
-             'diffLength': diffLength,
-             'target': target,
-             'prevHash': tools.det_hash(prev_block)}
+               'txs': txs + [make_mint(pubkey, DB)],
+               'length': leng,
+               'time': time.time(),
+               'diffLength': diffLength,
+               'target': target,
+               'prevHash': tools.det_hash(prev_block)}
         out = tools.unpackage(tools.package(out))
         return out
 
@@ -96,7 +96,7 @@ def peers_check(peers, DB):
                 return [max(length - 2, 0), end]
 
             blocks = cmd({'type': 'rangeRequest',
-                    'range': bounds(length, peers_block_count, DB)})
+                          'range': bounds(length, peers_block_count, DB)})
             if type(blocks) != type([1, 2]):
                 return []
             for i in range(2):  # Only delete a max of 2 blocks, otherwise a
@@ -119,7 +119,7 @@ def peers_check(peers, DB):
         def give_block(peer, DB, block_count):
             cmd({'type': 'pushblock',
                  'block': blockchain.db_get(block_count['length'] + 1,
-                                           DB)})
+                                            DB)})
             return []
 
         block_count = cmd({'type': 'blockCount'})
@@ -133,8 +133,8 @@ def peers_check(peers, DB):
         them = tools.buffer_(block_count['diffLength'], size)
         if them < us:
             return give_block(peer, DB, block_count)
-        if us == them: 
-           return ask_for_txs(peer, DB)
+        if us == them:
+            return ask_for_txs(peer, DB)
         return download_blocks(peer, DB, block_count, length)
 
     for peer in peers:
