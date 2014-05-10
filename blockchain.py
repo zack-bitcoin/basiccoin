@@ -35,7 +35,9 @@ def add_tx(tx, DB):
     def tx_type_check(tx, txs): return type(tx) != type({'a':1})
     
     def type_check(tx, txs): 
-        return 'type' not in tx or tx['type'] not in transactions.tx_check
+        if 'type' not in tx: return True
+        if tx['type']=='mint': return True
+        return tx['type'] not in transactions.tx_check
         
     def too_big_block(tx, txs): 
         return len(tools.package(txs+[tx]))>networking.MAX_MESSAGE_SIZE-5000
@@ -127,6 +129,25 @@ def add_block(block, DB):
         return sorted(mylist)[len(mylist) / 2]
         
     def block_check(block, DB):
+        def tx_check(txs):
+            start=copy.deepcopy(txs)
+            out=[]
+            start_copy=[]
+            while start!=start_copy:
+                if start==[]:
+                    return False#block passes this test
+                start_copy=copy.deepcopy(start)
+                if transactions.tx_check[start[-1]['type']](start[-1], out, DB):
+                    out.append(start.pop())
+                else:
+                    print('start: ' +str(start))
+                    print('out: ' +str(out))
+                    print('here')
+                    return True#block is invalid
+            print('start: ' +str(start))
+            print('start_copy: ' +str(start_copy))
+            print('here2')
+            return True#block is invalid
         if 'error' in block or 'error' in DB: return False
         if type(block)!=type({'a':1}): 
             print('type error')
@@ -150,6 +171,7 @@ def add_block(block, DB):
         if 'time' not in block: return False
         if block['time']>time.time(): return False
         if block['time']<earliest: return False
+        if tx_check(block['txs']): return False
         return True
         
     if block_check(block, DB):
@@ -167,16 +189,13 @@ def add_block(block, DB):
 def delete_block(DB):
     #removes the most recent block from the blockchain.
     if DB['length']<0: return
-    try:
-        targets.pop(str(length))
-        times.pop(str(length))
-    except:
-        pass
+    try: targets.pop(str(DB['length']))
+    except: pass
+    try: times.pop(str(DB['length']))
+    except: pass
     block=db_get(DB['length'], DB)
     orphans=DB['txs']
     DB['txs']=[]
-    print('len: ' +str(DB['length']))
-    print('block: ' +str(block))
     for tx in block['txs']:
         orphans.append(tx)
         transactions.delete_block[tx['type']](tx, DB)

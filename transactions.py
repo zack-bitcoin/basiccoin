@@ -23,7 +23,10 @@ def spend_verify(tx, txs, DB):
     if not sigs_match(copy.deepcopy(tx['signatures']), copy.deepcopy(tx['pubkeys']), msg): return False
     if tx['amount']<custom.fee: return False
     address=tools.make_address(tx_copy_2['pubkeys'], len(tx_copy_2['signatures']))
-    return int(blockchain.db_get(address, DB)['amount'])>=int(tx['amount']) 
+    total_cost=0
+    for Tx in filter(lambda t: tx['pubkeys']==t['pubkeys'], [tx]+txs):
+        total_cost+=Tx['amount']
+    return int(blockchain.db_get(address, DB)['amount'])>=total_cost
 
 def mint_verify(tx, txs, DB): 
     return 0==len(filter(lambda t: t['type']=='mint', txs))

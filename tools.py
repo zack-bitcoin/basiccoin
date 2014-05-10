@@ -1,4 +1,4 @@
-import pt, custom, base58
+import pt, custom
 from json import dumps as package, loads as unpackage
 
 #def pub2addr(pubkey): return pt.pubtoaddr(pubkey)
