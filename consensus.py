@@ -1,7 +1,13 @@
 """ This file mines blocks and talks to peers. It maintains consensus of the  
     blockchain.
 """
-import blockchain, custom, tools, networking, random, time, copy
+import blockchain
+import custom
+import tools
+import networking
+import random
+import time
+import copy
 
 def mine(hashes_till_check, reward_address, DB):
     #tries to mine the next block hashes_till_check many times.
