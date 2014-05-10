@@ -234,10 +234,14 @@ def delete_block(DB):
     # Removes the most recent block from the blockchain.
     if DB['length'] < 0:
         return
-    try: targets.pop(str(DB['length']))
-    except: pass
-    try: times.pop(str(DB['length']))
-    except: pass
+    try:
+        targets.pop(str(DB['length']))
+    except:
+        pass
+    try:
+        times.pop(str(DB['length']))
+    except:
+        pass
     block = db_get(DB['length'], DB)
     orphans = DB['txs']
     DB['txs'] = []
