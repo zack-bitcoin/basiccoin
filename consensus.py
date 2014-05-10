@@ -150,7 +150,7 @@ def suggestions(DB):
     DB['suggested_blocks'] = []
 
 
-def mainloop(reward_address, peers, hashes_till_check, DB):
+def mainloop(peers, DB):
     while True:
         time.sleep(1)
         peers_check(peers, DB)
