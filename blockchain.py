@@ -8,6 +8,7 @@ import tools
 import networking
 import transactions
 
+
 def db_get(n, DB):
     n = str(n)
     try:
@@ -17,11 +18,14 @@ def db_get(n, DB):
         # having zero money, and having broadcast zero transcations.
         return db_get(n, DB)
 
+
 def db_put(key, dic, DB):
     return DB['db'].Put(str(key), tools.package(dic))
 
+
 def db_delete(key, DB):
     return DB['db'].Delete(str(key))
+
 
 def count(address, DB):
     # Returns the number of transactions that pubkey has broadcast.
@@ -33,6 +37,7 @@ def count(address, DB):
 
     current = db_get(address, DB)['count']
     return current+zeroth_confirmation_txs(address, DB)
+
 
 def add_tx(tx, DB):
     # Attempt to add a new transaction into the pool.
@@ -74,6 +79,8 @@ def add_tx(tx, DB):
 
 targets = {}
 times = {}  # Stores blocktimes
+
+
 def recent_blockthings(key, DB, size, length=0):
     # Grabs info from old blocks.
     if key == 'time':
@@ -101,6 +108,7 @@ def hexSum(a, b):
 def hexInvert(n):
     # Use double-size for division, to reduce information leakage.
     return tools.buffer_(str(hex(int('f' * 128, 16) / int(n, 16)))[2: -1], 64)
+
 
 def target(DB, length=0):
     # Returns the target difficulty at a paticular blocklength.
@@ -135,6 +143,7 @@ def target(DB, length=0):
         w = weights(len(targets))
         tw = sum(w)
         targets = map(hexInvert, targets)
+
         def weighted_multiply(i):
             return targetTimesFloat(targets[i], w[i]/tw)
         weighted_targets=[weighted_multiply(i) for i in range(len(targets))]
@@ -149,6 +158,7 @@ def target(DB, length=0):
 
     retarget = estimate_time(DB) / custom.blocktime(length)
     return targetTimesFloat(estimate_target(DB), retarget)
+
 
 def add_block(block, DB):
     # Attempts adding a new block to the blockchain.
@@ -218,6 +228,7 @@ def add_block(block, DB):
             transactions.add_block[tx['type']](tx, DB)
         for tx in orphans:
             add_tx(tx, DB)
+
 
 def delete_block(DB):
     # Removes the most recent block from the blockchain.
