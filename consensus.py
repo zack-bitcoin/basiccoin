@@ -4,7 +4,7 @@ def mine(hashes_till_check, reward_address, DB):
     #tries to mine the next block hashes_till_check many times.
     def make_mint(pubkey, DB): 
         address=tools.make_address([reward_address], 1)
-        return {'type':'mint', 'id':[pubkey], 'signature':['first_sig'],
+        return {'type':'mint', 'pubkeys':[pubkey], 'signatures':['first_sig'],
                 'count':blockchain.count(address, DB)}
                                        
     def genesis(pubkey, DB):

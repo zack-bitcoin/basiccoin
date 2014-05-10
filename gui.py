@@ -4,7 +4,7 @@ import networking, copy, tools, os, blockchain, custom, http
 #money.
 def spend(amount, pubkey, privkey, to_pubkey, DB):
     amount=int(amount*(10**5))
-    tx={'type':'spend', 'id':[pubkey], 'amount':amount, 'to':to_pubkey}
+    tx={'type':'spend', 'pubkeys':[pubkey], 'amount':amount, 'to':to_pubkey}
     easy_add_transaction(tx, privkey, DB)
 
 def easy_add_transaction(tx_orig, privkey, DB):
@@ -15,7 +15,7 @@ def easy_add_transaction(tx_orig, privkey, DB):
         tx['count']=blockchain.count(address, DB)
     except:
         tx['count']=1
-    tx['signature']=[tools.sign(tools.det_hash(tx), privkey)]
+    tx['signatures']=[tools.sign(tools.det_hash(tx), privkey)]
     print('CREATED TX: ' +str(tx))
     blockchain.add_tx(tx, DB)
 
@@ -59,7 +59,7 @@ def home(DB, dic):
     for tx in DB['txs']:
         if tx['type'] == 'spend' and tx['to'] == address:
             balance += tx['amount'] - custom.fee
-        if tx['type'] == 'spend' and tx['id'][0] == pubkey:
+        if tx['type'] == 'spend' and tx['pubkeys'][0] == pubkey:
             balance -= tx['amount']
     out=out.format('<p>current balance is: ' +str(balance/100000.0)+'</p>{}')
     if balance>0:

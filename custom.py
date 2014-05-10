@@ -8,7 +8,7 @@ version="VERSION"
 block_reward=10**5
 premine=5*10**6
 fee=10**3
-timer_start_median=100#lower limits on what
+mmm=100#lower limits on what
 #the "time" tag in a block can say. Take the median
 #of this many of the blocks.
 history_length=400#how far back in history do

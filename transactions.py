@@ -16,13 +16,13 @@ def spend_verify(tx, txs, DB):
 
     tx_copy=copy.deepcopy(tx)
     tx_copy_2=copy.deepcopy(tx)
-    tx_copy.pop('signature')
-    if len(tx['id'])==0: return False
-    if len(tx['signature'])>len(tx['id']): return False
+    tx_copy.pop('signatures')
+    if len(tx['pubkeys'])==0: return False
+    if len(tx['signatures'])>len(tx['pubkeys']): return False
     msg=tools.det_hash(tx_copy)
-    if not sigs_match(copy.deepcopy(tx['signature']), copy.deepcopy(tx['id']), msg): return False
+    if not sigs_match(copy.deepcopy(tx['signatures']), copy.deepcopy(tx['pubkeys']), msg): return False
     if tx['amount']<custom.fee: return False
-    address=tools.make_address(tx_copy_2['id'], len(tx_copy_2['signature']))
+    address=tools.make_address(tx_copy_2['pubkeys'], len(tx_copy_2['signatures']))
     return int(blockchain.db_get(address, DB)['amount'])>=int(tx['amount']) 
 
 def mint_verify(tx, txs, DB): 
@@ -36,12 +36,12 @@ def adjust(key, pubkey, amount, DB):
     blockchain.db_put(pubkey, acc, DB)
 
 def mint(tx, DB): 
-    address=tools.make_address(tx['id'], len(tx['signature']))
+    address=tools.make_address(tx['pubkeys'], len(tx['signatures']))
     adjust('amount', address, custom.block_reward, DB)
     adjust('count', address, 1, DB)
 
 def spend(tx, DB):
-    address=tools.make_address(tx['id'], len(tx['signature']))
+    address=tools.make_address(tx['pubkeys'], len(tx['signatures']))
     adjust('amount', address, -tx['amount'], DB)
     adjust('amount', tx['to'], tx['amount']-custom.fee, DB)
     adjust('count', address, 1, DB)
@@ -49,12 +49,12 @@ add_block={'mint':mint, 'spend':spend}####
 #-----------------------------------------
 
 def unmint(tx, DB):
-    address=tools.make_address(tx['id'], len(tx['signature']))
+    address=tools.make_address(tx['pubkeys'], len(tx['signatures']))
     adjust('amount', address, -custom.block_reward, DB)
     adjust('count', address, -1, DB)
     
 def unspend(tx, DB):
-    address=tools.make_address(tx['id'], len(tx['signature']))
+    address=tools.make_address(tx['pubkeys'], len(tx['signatures']))
     adjust('amount', address, tx['amount'], DB)
     adjust('amount', tx['to'], custom.fee-tx['amount'], DB)
     adjust('count', address, -1, DB)

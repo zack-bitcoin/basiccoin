@@ -19,7 +19,7 @@ def count(address, DB):
     #returns the number of transactions that pubkey has broadcast.
 
     def zeroth_confirmation_txs(address, DB): 
-        def func(t): address==tools.make_address(t['id'], len(t['signature']))
+        def func(t): address==tools.make_address(t['pubkeys'], len(t['signatures']))
         return len(filter(func, DB['txs']))
 
     current=db_get(address, DB)['count']
@@ -27,7 +27,7 @@ def count(address, DB):
 
 def add_tx(tx, DB):
     #Attempt to add a new transaction into the pool.
-    address=tools.make_address(tx['id'], len(tx['signature']))
+    address=tools.make_address(tx['pubkeys'], len(tx['signatures']))
 
     def verify_count(tx, txs): 
         return tx['count']!=count(address, DB)
@@ -64,7 +64,6 @@ def recent_blockthings(key, DB, size, length=0):
         if not leng in storage: storage[leng]=db_get(leng, DB)[key]
         return storage[leng]
         
-    #print('DB: ' +str(DB))
     if length==0: length=DB['length']
     start= (length-size) if (length-size)>=0 else 0
     return map(get_val, range(start, length))
@@ -132,13 +131,11 @@ def add_block(block, DB):
         if type(block)!=type({'a':1}): 
             print('type error')
             return False
-        #print('DB: ' +str(DB))
-        length=copy.deepcopy(DB['length'])
         if 'length' not in block: return False
+        length=DB['length']
         if int(block['length'])!=int(length)+1: return False
         if block['diffLength']!=hexSum(DB['diffLength'], 
-                                       hexInvert(block['target'])):
-            print('diff length')
+                                       hexInvert(block['target'])): 
             return False
         if length >= 0:
             if tools.det_hash(db_get(length, DB))!=block['prevHash']: 
@@ -149,13 +146,12 @@ def add_block(block, DB):
         half_way={u'nonce':block['nonce'], u'halfHash':tools.det_hash(a)}
         if tools.det_hash(half_way)>block['target']: return False
         if block['target']!=target(DB, block['length']): return False
-        earliest=median(recent_blockthings('time', DB, custom.timer_start_median))
+        earliest=median(recent_blockthings('time', DB, custom.mmm))
         if 'time' not in block: return False
         if block['time']>time.time(): return False
         if block['time']<earliest: return False
         return True
         
-    #print('trying to add block: ' + str(block))
     if block_check(block, DB):
         print('add_block: '+str(block))
         db_put(block['length'], block, DB)

@@ -2,7 +2,7 @@ basiccoin
 
 The simplest currency.
 
-(The author will become homeless in 2 months) Donations: 1GbpRPE83Vjg73KFvTVZ4EnS2qNkiLY5TT
+Donations: 1GbpRPE83Vjg73KFvTVZ4EnS2qNkiLY5TT
 
 INSTALL (for ubuntu)
 
@@ -66,20 +66,10 @@ http://paulgraham.com/power.html
 
 7)  pep8
 
-###nlocktime/spend same transaction twice problem
+###Features
 
-```javascript
-//Example transaction 
-
-
-{'type':'spend', 
- 'id':pubkey1, 
- 'to':pubkey2, 
- 'start':1000, 
- 'end':1200,
- 'count':24, 
- 'signature':hodsnfoubewuwe==/dsnfiosfwf}
-
-```
-
-This transaction would be considered invalid if it was broadcast before blocklength 1000, or if it was broadcast after blocklength 1200, or if this is not pubkey1's 24th transaction.
+*   Blockchain
+*   mineable currency units
+*   can create unique addresses
+*   can spend the currency units to each other
+*   Multisig escrow

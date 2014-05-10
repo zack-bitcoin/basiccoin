@@ -1,5 +1,3 @@
-#rm -r *
-#cp -r ../for_git/* .
 ./reset.sh
 cd user1
 python threads.py &
