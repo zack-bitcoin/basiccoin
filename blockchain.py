@@ -49,7 +49,6 @@ def add_tx(tx, DB):
         if too_big_block(tx, txs): return False
         if 'start' in tx and DB['length']<tx['start']: return False
         if 'end' in tx and DB['length']>tx['end']: return False
-        #print('tx to transcations: ' +str(tx))
         return transactions.tx_check[tx['type']](tx, txs, DB)
         
     if verify_tx(tx, DB['txs']): DB['txs'].append(tx)
@@ -140,18 +139,10 @@ def add_block(block, DB):
                 if transactions.tx_check[start[-1]['type']](start[-1], out, DB):
                     out.append(start.pop())
                 else:
-                    print('start: ' +str(start))
-                    print('out: ' +str(out))
-                    print('here')
                     return True#block is invalid
-            print('start: ' +str(start))
-            print('start_copy: ' +str(start_copy))
-            print('here2')
             return True#block is invalid
-        if 'error' in block or 'error' in DB: return False
-        if type(block)!=type({'a':1}): 
-            print('type error')
-            return False
+        if 'error' in block: return False
+        if type(block)!=type({'a':1}): return False
         if 'length' not in block: return False
         length=DB['length']
         if int(block['length'])!=int(length)+1: return False
@@ -205,8 +196,6 @@ def delete_block(DB):
         DB['diffLength']='0'
     else:
         block=db_get(DB['length'], DB)
-        print('block: ' +str(block))
-        print(DB['length'])
         DB['diffLength']=db_get(DB['length'], DB)['diffLength']
     for orphan in sorted(orphans, key=lambda x: x['count']):
         add_tx(tx, DB)

@@ -5,9 +5,7 @@ from json import dumps as package, loads as unpackage
 
 def sign(msg, privkey): return pt.ecdsa_sign(msg, privkey)
 
-def verify(msg, sig, pubkey): 
-    #print('msg, sig, pubkey: ' +str(msg) + ' ' + str(sig) + ' ' + str(pubkey))
-    return pt.ecdsa_verify(msg, sig, pubkey)
+def verify(msg, sig, pubkey): return pt.ecdsa_verify(msg, sig, pubkey)
 
 def privtopub(privkey): return pt.privtopub(privkey)
 
