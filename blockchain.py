@@ -20,13 +20,15 @@ def db_get(n, DB):
 def db_put(key, dic, DB): 
     return DB['db'].Put(str(key), tools.package(dic))
 
-def db_delete(key, DB): return DB['db'].Delete(str(key))
+def db_delete(key, DB): 
+    return DB['db'].Delete(str(key))
 
 def count(address, DB):
     #returns the number of transactions that pubkey has broadcast.
 
     def zeroth_confirmation_txs(address, DB): 
-        def func(t): address == tools.make_address(t['pubkeys'], len(t['signatures']))
+        def func(t): 
+            address == tools.make_address(t['pubkeys'], len(t['signatures']))
         return len(filter(func, DB['txs']))
 
     current = db_get(address, DB)['count']
@@ -39,61 +41,81 @@ def add_tx(tx, DB):
     def verify_count(tx, txs): 
         return tx['count'] != count(address, DB)
     
-    def tx_type_check(tx, txs): return type(tx) != type({'a':1})
+    def tx_type_check(tx, txs): 
+        return type(tx) != type({'a':1})
     
     def type_check(tx, txs): 
-        if 'type' not in tx: return True
-        if tx['type'] == 'mint': return True
+        if 'type' not in tx: 
+            return True
+        if tx['type'] == 'mint': 
+            return True
         return tx['type'] not in transactions.tx_check
         
     def too_big_block(tx, txs): 
         return len(tools.package(txs+[tx])) > networking.MAX_MESSAGE_SIZE - 5000
         
     def verify_tx(tx, txs):
-        if type_check(tx, txs): return False
-        if tx in txs: return False
-        if verify_count(tx, txs): return False
-        if too_big_block(tx, txs): return False
-        if 'start' in tx and DB['length'] < tx['start']: return False
-        if 'end' in tx and DB['length'] > tx['end']: return False
+        if type_check(tx, txs): 
+            return False
+        if tx in txs: 
+            return False
+        if verify_count(tx, txs): 
+            return False
+        if too_big_block(tx, txs): 
+            return False
+        if 'start' in tx and DB['length'] < tx['start']: 
+            return False
+        if 'end' in tx and DB['length'] > tx['end']: 
+            return False
         return transactions.tx_check[tx['type']](tx, txs, DB)
         
-    if verify_tx(tx, DB['txs']): DB['txs'].append(tx)
+    if verify_tx(tx, DB['txs']): 
+        DB['txs'].append(tx)
 
 targets = {}
 times = {}#stores blocktimes
 def recent_blockthings(key, DB, size, length=0):
     #Grabs info from old blocks.
-    if key == 'time': storage = times
-    if key == 'target': storage = targets
+    if key == 'time': 
+        storage = times
+    if key == 'target': 
+        storage = targets
     
     def get_val(length):
         leng = str(length)
-        if not leng in storage: storage[leng] = db_get(leng, DB)[key]
+        if not leng in storage: 
+            storage[leng] = db_get(leng, DB)[key]
         return storage[leng]
         
-    if length == 0: length = DB['length']
+    if length == 0: 
+        length = DB['length']
     start = (length-size) if (length-size) >= 0 else 0
     return map(get_val, range(start, length))
 
 #sum of numbers expressed as hexidecimal strings
-def hexSum(a, b): return tools.buffer_(str(hex(int(a, 16)+int(b, 16)))[2: -1], 64)
+def hexSum(a, b): 
+    return tools.buffer_(str(hex(int(a, 16)+int(b, 16)))[2: -1], 64)
 
 #use double-size for division, to reduce information leakage.
-def hexInvert(n): return tools.buffer_(str(hex(int('f' * 128, 16) / int(n, 16)))[2: -1], 64)
+def hexInvert(n): 
+    return tools.buffer_(str(hex(int('f' * 128, 16) / int(n, 16)))[2: -1], 64)
 
 def target(DB, length=0):
     #returns the target difficulty at a paticular blocklength.
-    if length == 0: length = DB['length']
-    if length < 4: return '0' * 4 + 'f' * 60#use same difficulty for first few blocks.
-    if length<=DB['length']: return targets[str(length)]#memoized
+    if length == 0: 
+        length = DB['length']
+    if length < 4: 
+        return '0' * 4 + 'f' * 60#use same difficulty for first few blocks.
+    if length<=DB['length']: 
+        return targets[str(length)]#memoized
     
     def targetTimesFloat(target, number): 
         a = int(str(target), 16)
         b = int(a * number)
         return tools.buffer_(str(hex(b))[2: -1], 64)
         
-    def weights(length): return [custom.inflection ** (length-i) for i in range(length)]
+    def weights(length): 
+        return [custom.inflection ** (length-i) for i in range(length)]
     
     def estimate_target(DB):
         #We are actually interested in the average number of hashes requred
@@ -101,7 +123,8 @@ def target(DB, length=0):
         #to target. So we average over inverse-targets, and inverse the final
         #answer.
         def sumTargets(l):
-            if len(l) < 1: return 0
+            if len(l) < 1: 
+                return 0
             while len(l) > 1:
                 l = [hexSum(l[0], l[1])] + l[2:]
             return l[0]
@@ -110,7 +133,8 @@ def target(DB, length=0):
         w = weights(len(targets))
         tw = sum(w)
         targets = map(hexInvert, targets)
-        def weighted_multiply(i): return targetTimesFloat(targets[i], w[i]/tw)
+        def weighted_multiply(i): 
+            return targetTimesFloat(targets[i], w[i]/tw)
         weighted_targets=[weighted_multiply(i) for i in range(len(targets))]
         return hexInvert(sumTargets(weighted_targets))
         
@@ -128,7 +152,8 @@ def add_block(block, DB):
     #attempts adding a new block to the blockchain.
     #median is good for weeding out liars, so long as 
     def median(mylist): #the liars don't have 51% hashpower.
-        if len(mylist) < 1: return 0
+        if len(mylist) < 1: 
+            return 0
         return sorted(mylist)[len(mylist) / 2]
         
     def block_check(block, DB):
@@ -194,7 +219,8 @@ def add_block(block, DB):
 
 def delete_block(DB):
     #removes the most recent block from the blockchain.
-    if DB['length']<0: return
+    if DB['length']<0: 
+        return
     try: targets.pop(str(DB['length']))
     except: pass
     try: times.pop(str(DB['length']))
