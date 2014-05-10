@@ -1,7 +1,12 @@
 """ This file explains how we talk to the database. It explains the rules for 
     adding blocks and transactions.
 """
-import time, copy, custom, tools, networking, transactions
+import time
+import copy
+import custom
+import tools
+import networking
+import transactions
 
 def db_get(n, DB): 
     n=str(n)
