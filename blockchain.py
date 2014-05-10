@@ -254,6 +254,6 @@ def delete_block(DB):
         DB['diffLength'] = '0'
     else:
         block = db_get(DB['length'], DB)
-        DB['diffLength'] = db_get(DB['length'], DB)['diffLength']
+        DB['diffLength'] = block['diffLength']
     for orphan in sorted(orphans, key=lambda x: x['count']):
         add_tx(tx, DB)
