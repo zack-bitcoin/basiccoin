@@ -76,7 +76,8 @@ def peers_check(peers, DB):
     # Check on the peers to see if they know about more blocks than we do.
     def peer_check(peer, DB):
 
-        def cmd(x): return networking.send_command(peer, x)
+        def cmd(x):
+            return networking.send_command(peer, x)
 
         def download_blocks(peer, DB, peers_block_count, length):
 
@@ -96,7 +97,8 @@ def peers_check(peers, DB):
 
             blocks = cmd({'type': 'rangeRequest',
                     'range': bounds(length, peers_block_count, DB)})
-            if type(blocks) != type([1, 2]): return []
+            if type(blocks) != type([1, 2]):
+                return []
             for i in range(2):  # Only delete a max of 2 blocks, otherwise a
                 # peer might trick us into deleting everything over and over.
                 if fork_check(blocks, DB):
@@ -129,8 +131,10 @@ def peers_check(peers, DB):
         size = max(len(DB['diffLength']), len(block_count['diffLength']))
         us = tools.buffer_(DB['diffLength'], size)
         them = tools.buffer_(block_count['diffLength'], size)
-        if them < us: return give_block(peer, DB, block_count)
-        if us == them: return ask_for_txs(peer, DB)
+        if them < us:
+            return give_block(peer, DB, block_count)
+        if us == them: 
+           return ask_for_txs(peer, DB)
         return download_blocks(peer, DB, block_count, length)
 
     for peer in peers:
