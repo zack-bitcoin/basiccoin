@@ -13,8 +13,8 @@ def db_get(n, DB):
     try:
         return tools.unpackage(DB['db'].Get(n))
     except:
-        db_put(n, {'count': 0, 'amount': 0}, DB)#everyone defaults with
-        #having zero money, and having broadcast zero transcations.
+        db_put(n, {'count': 0, 'amount': 0}, DB)  # Everyone defaults with
+        # having zero money, and having broadcast zero transcations.
         return db_get(n, DB)
 
 def db_put(key, dic, DB): 
@@ -24,7 +24,7 @@ def db_delete(key, DB):
     return DB['db'].Delete(str(key))
 
 def count(address, DB):
-    #returns the number of transactions that pubkey has broadcast.
+    # Returns the number of transactions that pubkey has broadcast.
 
     def zeroth_confirmation_txs(address, DB): 
         def func(t): 
@@ -35,7 +35,7 @@ def count(address, DB):
     return current+zeroth_confirmation_txs(address, DB)
 
 def add_tx(tx, DB):
-    #Attempt to add a new transaction into the pool.
+    # Attempt to add a new transaction into the pool.
     address = tools.make_address(tx['pubkeys'], len(tx['signatures']))
 
     def verify_count(tx, txs): 
@@ -73,9 +73,9 @@ def add_tx(tx, DB):
         DB['txs'].append(tx)
 
 targets = {}
-times = {}#stores blocktimes
+times = {}  # Stores blocktimes
 def recent_blockthings(key, DB, size, length=0):
-    #Grabs info from old blocks.
+    # Grabs info from old blocks.
     if key == 'time': 
         storage = times
     if key == 'target': 
@@ -92,22 +92,24 @@ def recent_blockthings(key, DB, size, length=0):
     start = (length-size) if (length-size) >= 0 else 0
     return map(get_val, range(start, length))
 
-#sum of numbers expressed as hexidecimal strings
-def hexSum(a, b): 
+
+def hexSum(a, b):
+    # Sum of numbers expressed as hexidecimal strings
     return tools.buffer_(str(hex(int(a, 16)+int(b, 16)))[2: -1], 64)
 
-#use double-size for division, to reduce information leakage.
-def hexInvert(n): 
+
+def hexInvert(n):
+    # Use double-size for division, to reduce information leakage.
     return tools.buffer_(str(hex(int('f' * 128, 16) / int(n, 16)))[2: -1], 64)
 
 def target(DB, length=0):
-    #returns the target difficulty at a paticular blocklength.
+    # Returns the target difficulty at a paticular blocklength.
     if length == 0: 
         length = DB['length']
     if length < 4: 
-        return '0' * 4 + 'f' * 60#use same difficulty for first few blocks.
+        return '0' * 4 + 'f' * 60  # Use same difficulty for first few blocks.
     if length<=DB['length']: 
-        return targets[str(length)]#memoized
+        return targets[str(length)]  # Memoized
     
     def targetTimesFloat(target, number): 
         a = int(str(target), 16)
@@ -118,10 +120,10 @@ def target(DB, length=0):
         return [custom.inflection ** (length-i) for i in range(length)]
     
     def estimate_target(DB):
-        #We are actually interested in the average number of hashes requred
-        #to mine a block. number of hashes required is inversely proportional
-        #to target. So we average over inverse-targets, and inverse the final
-        #answer.
+        # We are actually interested in the average number of hashes requred
+        # to mine a block. number of hashes required is inversely proportional
+        # to target. So we average over inverse-targets, and inverse the final
+        # answer.
         def sumTargets(l):
             if len(l) < 1: 
                 return 0
@@ -141,17 +143,17 @@ def target(DB, length=0):
     def estimate_time(DB):
         times = recent_blockthings('time', DB, custom.history_length)
         blocklengths = [times[i] - times[i - 1] for i in range(1, len(times))]
-        w = weights(len(blocklengths))#geometric weighting
-        tw = sum(w)#normalization constant
+        w = weights(len(blocklengths))  # Geometric weighting
+        tw = sum(w)  # Normalization constant
         return sum([w[i] * blocklengths[i] / tw for i in range(len(blocklengths))])
         
     retarget = estimate_time(DB) / custom.blocktime(length)
     return targetTimesFloat(estimate_target(DB), retarget)
 
 def add_block(block, DB):
-    #attempts adding a new block to the blockchain.
-    #median is good for weeding out liars, so long as 
-    def median(mylist): #the liars don't have 51% hashpower.
+    # Attempts adding a new block to the blockchain.
+    # Median is good for weeding out liars, so long as 
+    def median(mylist): # the liars don't have 51% hashpower.
         if len(mylist) < 1: 
             return 0
         return sorted(mylist)[len(mylist) / 2]
@@ -163,13 +165,13 @@ def add_block(block, DB):
             start_copy = []
             while start! = start_copy:
                 if start == []:
-                    return False#block passes this test
+                    return False  # Block passes this test
                 start_copy = copy.deepcopy(start)
                 if transactions.tx_check[start[-1]['type']](start[-1], out, DB):
                     out.append(start.pop())
                 else:
-                    return True#block is invalid
-            return True#block is invalid
+                    return True  # Block is invalid
+            return True  # Block is invalid
         if type(block) != type({'a': 1}): 
             return False
         if 'error' in block:
@@ -218,7 +220,7 @@ def add_block(block, DB):
             add_tx(tx, DB)
 
 def delete_block(DB):
-    #removes the most recent block from the blockchain.
+    # Removes the most recent block from the blockchain.
     if DB['length']<0: 
         return
     try: targets.pop(str(DB['length']))
