@@ -146,7 +146,7 @@ def target(DB, length=0):
 
         def weighted_multiply(i):
             return targetTimesFloat(targets[i], w[i]/tw)
-        weighted_targetsi = [weighted_multiply(i) for i in range(len(targets))]
+        weighted_targets = [weighted_multiply(i) for i in range(len(targets))]
         return hexInvert(sumTargets(weighted_targets))
 
     def estimate_time(DB):
