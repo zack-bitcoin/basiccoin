@@ -1,4 +1,4 @@
-""" This file mines blocks and talks to peers. It maintains consensus of the  
+""" This file mines blocks and talks to peers. It maintains consensus of the
     blockchain.
 """
 import blockchain
@@ -11,11 +11,11 @@ import copy
 
 def mine(hashes_till_check, reward_address, DB):
     # Tries to mine the next block hashes_till_check many times.
-    def make_mint(pubkey, DB): 
+    def make_mint(pubkey, DB):
         address=tools.make_address([reward_address], 1)
         return {'type':'mint', 'pubkeys':[pubkey], 'signatures':['first_sig'],
                 'count':blockchain.count(address, DB)}
-                                       
+
     def genesis(pubkey, DB):
         target=blockchain.target(DB)
         out={'version':custom.version,
@@ -27,11 +27,11 @@ def mine(hashes_till_check, reward_address, DB):
         print('out: ' +str(out))
         out=tools.unpackage(tools.package(out))
         return out
-        
+
     def make_block(prev_block, txs, pubkey, DB):
         leng=int(prev_block['length'])+1
         target=blockchain.target(DB, leng)
-        diffLength=blockchain.hexSum(prev_block['diffLength'], 
+        diffLength=blockchain.hexSum(prev_block['diffLength'],
                                      blockchain.hexInvert(target))
         out={'version':custom.version,
              'txs':txs+[make_mint(pubkey, DB)],
@@ -42,12 +42,12 @@ def mine(hashes_till_check, reward_address, DB):
              'prevHash':tools.det_hash(prev_block)}
         out=tools.unpackage(tools.package(out))
         return out
-        
+
     def POW(block, hashes, target):
         halfHash=tools.det_hash(block)
         block[u'nonce']=random.randint(0,100000000000000000)
         count=0
-        while tools.det_hash({u'nonce':block['nonce'], 
+        while tools.det_hash({u'nonce':block['nonce'],
                               u'halfHash':halfHash})>target:
             count+=1
             block[u'nonce']+=1
@@ -58,7 +58,7 @@ def mine(hashes_till_check, reward_address, DB):
             else: time.sleep(0.01)
             '''
         return block
-        
+
     length=DB['length']
     if length==-1:
         block=genesis(reward_address, DB)
@@ -95,7 +95,7 @@ def peers_check(peers, DB):
             blocks= cmd({'type':'rangeRequest',
                     'range':bounds(length, peers_block_count, DB)})
             if type(blocks)!=type([1,2]): return []
-            for i in range(2):  # Only delete a max of 2 blocks, otherwise a 
+            for i in range(2):  # Only delete a max of 2 blocks, otherwise a
                 # peer might trick us into deleting everything over and over.
                 if fork_check(blocks, DB):
                     blockchain.delete_block(DB)
@@ -113,7 +113,7 @@ def peers_check(peers, DB):
             return []
 
         def give_block(peer, DB, block_count):
-            cmd({'type':'pushblock', 
+            cmd({'type':'pushblock',
                  'block':blockchain.db_get(block_count['length']+1,
                                            DB)})
             return []
@@ -147,5 +147,5 @@ def mainloop(reward_address, peers, hashes_till_check, DB):
         suggestions(DB)
 
 def miner(reward_address, peers, hashes_till_check, DB):
-    while True: 
+    while True:
         mine(hashes_till_check, reward_address, DB)
