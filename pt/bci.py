@@ -73,7 +73,7 @@ def last_block_height():
 # Gets a specific transaction
 def fetchtx(txhash):
     if not re.match('^[0-9a-fA-F]*$',txhash): txhash = txhash.encode('hex')
-    data = make_request('http://blockchain.info/rawtx/'+txhash+'?format=hex');
+    data = make_request('http://blockchain.info/rawtx/'+txhash+'?format=hex')
     return data
 
 def firstbits(address):
