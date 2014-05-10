@@ -134,6 +134,7 @@ def add_block(block, DB):
             return False
         #print('DB: ' +str(DB))
         length=copy.deepcopy(DB['length'])
+        if 'length' not in block: return False
         if int(block['length'])!=int(length)+1: return False
         if block['diffLength']!=hexSum(DB['diffLength'], 
                                        hexInvert(block['target'])):
@@ -178,6 +179,8 @@ def delete_block(DB):
     block=db_get(DB['length'], DB)
     orphans=DB['txs']
     DB['txs']=[]
+    print('len: ' +str(DB['length']))
+    print('block: ' +str(block))
     for tx in block['txs']:
         orphans.append(tx)
         transactions.delete_block[tx['type']](tx, DB)
@@ -186,6 +189,9 @@ def delete_block(DB):
     if DB['length']==-1: 
         DB['diffLength']='0'
     else:
+        block=db_get(DB['length'], DB)
+        print('block: ' +str(block))
+        print(DB['length'])
         DB['diffLength']=db_get(DB['length'], DB)['diffLength']
     for orphan in sorted(orphans, key=lambda x: x['count']):
         add_tx(tx, DB)

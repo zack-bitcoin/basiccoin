@@ -34,4 +34,3 @@ def blocktime(length):
         return 30
     else:
         return 60
-

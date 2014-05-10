@@ -49,7 +49,7 @@ def mine(hashes_till_check, reward_address, DB):
             '''
         return block
         
-    length=copy.deepcopy(DB['length'])
+    length=DB['length']
     if length==-1:
         block=genesis(reward_address, DB)
         txs=[]
@@ -62,86 +62,75 @@ def mine(hashes_till_check, reward_address, DB):
 
 def peers_check(peers, DB):
     #check on the peers to see if they know about more blocks than we do.
-    def fork_check(newblocks, DB):
-        #if we are on a fork, return True
-        #try:
-        length=copy.deepcopy(DB['length'])
-        block=blockchain.db_get(length, DB)
-        recent_hash=tools.det_hash(block)
-        their_hashes=map(tools.det_hash, newblocks)
-        return recent_hash not in map(tools.det_hash, newblocks)
-        #except Exception as e:
-            #print('ERROR: ' +str(e))
-         #   return False
-            
     def peer_check(peer, DB):
-        cmd=(lambda x: networking.send_command(peer, x))
-        block_count=cmd({'type':'blockCount'})
-        if type(block_count)!=type({'a':1}):
-            return 
-        if 'error' in block_count.keys():
-            return         
-        length=copy.deepcopy(DB['length'])
-        us=copy.deepcopy(DB['diffLength'])
-        them=block_count['diffLength']
-        ahead=length-block_count['length']
-        if them < us and ahead>0:#if we are ahead of them
-            cmd({'type':'pushblock', 
-                 'block':blockchain.db_get(block_count['length']+1, DB)})
-            return []
-        if length<0: return []
-        if us == them:#if we are on the same block, ask for any new txs
-            block=blockchain.db_get(length, DB)
-            if 'recent_hash' in block_count:
-                if tools.det_hash(block)!=block_count['recent_hash']:
-                    blockchain.delete_block()
-                    #print('WE WERE ON A FORK. time to back up.')
-                    return []
-            my_txs=DB['txs']
+
+        def cmd(x): return networking.send_command(peer, x)
+
+        def download_blocks(peer, DB, peers_block_count, length):
+
+            def fork_check(newblocks, DB):
+                length=copy.deepcopy(DB['length'])
+                block=blockchain.db_get(length, DB)
+                recent_hash=tools.det_hash(block)
+                their_hashes=map(tools.det_hash, newblocks)
+                return recent_hash not in map(tools.det_hash, newblocks)
+
+            def bounds(length, peers_block_count, DB):
+                if peers_block_count['length']-length>custom.download_many:
+                    end=length+custom.download_many-1
+                else:
+                    end=peers_block_count['length']
+                return [max(length-2, 0), end]
+
+            blocks= cmd({'type':'rangeRequest',
+                    'range':bounds(length, peers_block_count, DB)})
+            if type(blocks)!=type([1,2]): return []
+            for i in range(2):#only delete a max of 2 blocks, otherwise a 
+                #peer might trick us into deleting everything over and over.
+                if fork_check(blocks, DB):
+                    blockchain.delete_block(DB)
+            for block in blocks:
+                DB['suggested_blocks'].append(block)
+            return
+
+        def ask_for_txs(peer, DB):
             txs=cmd({'type':'txs'})
             for tx in txs:
                 DB['suggested_txs'].append(tx)
-            pushers=[x for x in my_txs if x not in txs]
+            pushers=[x for x in DB['txs'] if x not in txs]
             for push in pushers:
                 cmd({'type':'pushtx', 'tx':push})
             return []
-        start=length-2
-        if start<0:
-            start=0
-        if ahead>custom.download_many:
-            end=length+custom.doanload_many-1
-        else:
-            end=block_count['length']
-        blocks= cmd({'type':'rangeRequest', 
-                     'range':[start, end]})
-        if type(blocks)!=type([1,2]):
+
+        def give_block(peer, DB, block_count):
+            cmd({'type':'pushblock', 
+                 'block':blockchain.db_get(block_count['length']+1,
+                                           DB)})
             return []
-        times=2
-        while fork_check(blocks, DB) and times>0:
-            times-=1
-            blockchain.delete_block(DB)
-        for block in blocks:
-            DB['suggested_blocks'].append(block)
-            
+
+        block_count=cmd({'type':'blockCount'})
+        if type(block_count)!=type({'a':1}):
+            return
+        if 'error' in block_count.keys():
+            return
+        length=DB['length']
+        us=DB['diffLength']
+        them=block_count['diffLength']
+        if them < us: return give_block(peer, DB, block_count)
+        if us == them: return ask_for_txs(peer, DB)
+        return download_blocks(peer, DB, block_count, length)
+
     for peer in peers:
         peer_check(peer, DB)
 
 def suggestions(DB):
-    #the other thread called listener.server is listening to peers and adding 
-    #suggested transactions and blocks from them into these lists of 
-    #suggestions. 
-    for tx in DB['suggested_txs']:
-        #print('SUGGESTED TX')
-        #print('tx: ' +str(tx))
-        blockchain.add_tx(tx, DB)
-    #[blockchain.add_tx(tx, DB) for tx in DB['suggested_txs']]
-    [blockchain.add_block(block, DB) for block in DB['suggested_blocks']]
+    [blockchain.add_tx(tx, DB) for tx in DB['suggested_txs']]
     DB['suggested_txs']=[]
+    [blockchain.add_block(block, DB) for block in DB['suggested_blocks']]
     DB['suggested_blocks']=[]
 
 def mainloop(reward_address, peers, hashes_till_check, DB):
     while True:
-        #mine(hashes_till_check, reward_address, DB) 
         time.sleep(1)
         peers_check(peers, DB)
         suggestions(DB)
@@ -149,4 +138,3 @@ def mainloop(reward_address, peers, hashes_till_check, DB):
 def miner(reward_address, peers, hashes_till_check, DB):
     while True: 
         mine(hashes_till_check, reward_address, DB)
-
