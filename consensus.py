@@ -10,7 +10,7 @@ import time
 import copy
 
 def mine(hashes_till_check, reward_address, DB):
-    #tries to mine the next block hashes_till_check many times.
+    # Tries to mine the next block hashes_till_check many times.
     def make_mint(pubkey, DB): 
         address=tools.make_address([reward_address], 1)
         return {'type':'mint', 'pubkeys':[pubkey], 'signatures':['first_sig'],
@@ -71,7 +71,7 @@ def mine(hashes_till_check, reward_address, DB):
     DB['suggested_blocks'].append(block)
 
 def peers_check(peers, DB):
-    #check on the peers to see if they know about more blocks than we do.
+    # Check on the peers to see if they know about more blocks than we do.
     def peer_check(peer, DB):
 
         def cmd(x): return networking.send_command(peer, x)
@@ -95,8 +95,8 @@ def peers_check(peers, DB):
             blocks= cmd({'type':'rangeRequest',
                     'range':bounds(length, peers_block_count, DB)})
             if type(blocks)!=type([1,2]): return []
-            for i in range(2):#only delete a max of 2 blocks, otherwise a 
-                #peer might trick us into deleting everything over and over.
+            for i in range(2):  # Only delete a max of 2 blocks, otherwise a 
+                # peer might trick us into deleting everything over and over.
                 if fork_check(blocks, DB):
                     blockchain.delete_block(DB)
             for block in blocks:
