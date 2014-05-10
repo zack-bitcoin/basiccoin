@@ -58,7 +58,7 @@ def home(DB, dic):
     balance=blockchain.db_get(address, DB)['amount']
     for tx in DB['txs']:
         if tx['type'] == 'spend' and tx['to'] == address:
-            balance += tx['amount']
+            balance += tx['amount'] - custom.fee
         if tx['type'] == 'spend' and tx['id'][0] == pubkey:
             balance -= tx['amount']
     out=out.format('<p>current balance is: ' +str(balance/100000.0)+'</p>{}')

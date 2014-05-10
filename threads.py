@@ -12,6 +12,8 @@ DB={'db':db,
 todo=[
 #keeps track of blockchain database, checks on peers for new 
 #blocks and transactions.
+    [consensus.miner, 
+     (custom.pubkey, custom.peers, custom.hashes_per_check, DB), True],
     [consensus.mainloop, 
      (custom.pubkey, custom.peers, custom.hashes_per_check, DB), True],
 #listens for peers. Peers might ask us for our blocks and our pool of recent 
