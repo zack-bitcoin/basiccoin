@@ -131,7 +131,7 @@ def suggestions(DB):
     [blockchain.add_block(block, DB) for block in DB['suggested_blocks']]
     DB['suggested_blocks']=[]
 
-def mainloop(reward_address, peers, hashes_till_check, DB):
+def mainloop(peers, DB):
     while True:
         time.sleep(1)
         peers_check(peers, DB)

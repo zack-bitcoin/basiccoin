@@ -15,7 +15,7 @@ todo=[
     [consensus.miner, 
      (custom.pubkey, custom.peers, custom.hashes_per_check, DB), True],
     [consensus.mainloop, 
-     (custom.pubkey, custom.peers, custom.hashes_per_check, DB), True],
+     (custom.peers, DB), True],
 #listens for peers. Peers might ask us for our blocks and our pool of recent 
 #transactions, or peers could suggest blocks and transactions to us.
       [listener.server, (DB, ), True],
