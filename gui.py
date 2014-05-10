@@ -1,4 +1,4 @@
-import networking, copy, tools, os, blockchain, custom, http
+import copy, tools, blockchain, custom, http
 #the easiest way to understand this file is to try it out and have a look at 
 #the html it creates. It creates a very simple page that allows you to spend 
 #money.

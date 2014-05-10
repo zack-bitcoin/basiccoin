@@ -1,7 +1,7 @@
 from Yashttpd import serve_forever, CONQ, CHUNK
 from urlparse import parse_qs
-from mimetypes import guess_type
-#gui.py uses this file to diplay html to browser.
+
+#gui.py uses this file to display html to browser.
 def GET(DB, request_dict, func):
     path = request_dict['uri'][1:]
     message = func(DB)
