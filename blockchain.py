@@ -173,7 +173,7 @@ def add_block(block, DB):
             start = copy.deepcopy(txs)
             out = []
             start_copy = []
-            while start! = start_copy:
+            while start != start_copy:
                 if start == []:
                     return False  # Block passes this test
                 start_copy = copy.deepcopy(start)
