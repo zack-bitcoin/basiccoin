@@ -9,6 +9,7 @@ import random
 import time
 import copy
 
+
 def mine(hashes_till_check, reward_address, DB):
     # Tries to mine the next block hashes_till_check many times.
     def make_mint(pubkey, DB):
@@ -69,6 +70,7 @@ def mine(hashes_till_check, reward_address, DB):
         block = make_block(prev_block, txs, reward_address, DB)
     block = POW(block, hashes_till_check, blockchain.target(DB, block['length']))
     DB['suggested_blocks'].append(block)
+
 
 def peers_check(peers, DB):
     # Check on the peers to see if they know about more blocks than we do.
@@ -134,17 +136,20 @@ def peers_check(peers, DB):
     for peer in peers:
         peer_check(peer, DB)
 
+
 def suggestions(DB):
     [blockchain.add_tx(tx, DB) for tx in DB['suggested_txs']]
     DB['suggested_txs'] = []
     [blockchain.add_block(block, DB) for block in DB['suggested_blocks']]
     DB['suggested_blocks'] = []
 
+
 def mainloop(reward_address, peers, hashes_till_check, DB):
     while True:
         time.sleep(1)
         peers_check(peers, DB)
         suggestions(DB)
+
 
 def miner(reward_address, peers, hashes_till_check, DB):
     while True:
