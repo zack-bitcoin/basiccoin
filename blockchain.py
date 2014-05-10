@@ -47,7 +47,7 @@ def add_tx(tx, DB):
         return tx['count'] != count(address, DB)
 
     def tx_type_check(tx, txs):
-        return type(tx) != type({'a': 1})
+        return not isinstance(tx, dict)
 
     def type_check(tx, txs):
         if 'type' not in tx:
@@ -182,7 +182,7 @@ def add_block(block, DB):
                 else:
                     return True  # Block is invalid
             return True  # Block is invalid
-        if type(block) != type({'a': 1}):
+        if not isinstance(block, dict):
             return False
         if 'error' in block:
             return False
