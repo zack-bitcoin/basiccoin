@@ -222,7 +222,7 @@ def add_block(block, DB):
         db_put(block['length'], block, DB)
         DB['length'] = block['length']
         DB['diffLength'] = block['diffLength']
-        orphans = DB['txs']
+        orphans = copy.deepcopy(DB['txs'])
         DB['txs'] = []
         for tx in block['txs']:
             transactions.add_block[tx['type']](tx, DB)
@@ -243,7 +243,7 @@ def delete_block(DB):
     except:
         pass
     block = db_get(DB['length'], DB)
-    orphans = DB['txs']
+    orphans = copy.deepcopy(DB['txs'])
     DB['txs'] = []
     for tx in block['txs']:
         orphans.append(tx)
