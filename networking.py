@@ -1,6 +1,12 @@
-import socket, subprocess, re, tools, custom
-#This file explains how sockets work for networking.
+"""This file explains how sockets work for networking."""
+import socket
+import subprocess
+import re
+import tools
+import custom
 MAX_MESSAGE_SIZE = 60000
+
+
 def kill_processes_using_ports(ports):
     popen = subprocess.Popen(['netstat', '-lpn'],
                              shell=False,
@@ -15,6 +21,7 @@ def kill_processes_using_ports(ports):
             pid = match.group('pid')
             subprocess.Popen(['kill', '-9', pid])
 
+
 def serve_forever(message_handler_func, PORT, queue):
     server = socket.socket()
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -25,18 +32,19 @@ def serve_forever(message_handler_func, PORT, queue):
         (ip, port) = addr
         data = client.recv(MAX_MESSAGE_SIZE)
         #we could insert security checks here
-        data=tools.unpackage(data)
+        data = tools.unpackage(data)
         client.send(tools.package(message_handler_func(data, queue)))
 
+
 def connect(msg, host, port):
-    if len(msg)<1 or len(msg)>MAX_MESSAGE_SIZE:
+    if len(msg) < 1 or len(msg) > MAX_MESSAGE_SIZE:
         print('wrong sized message')
         return
     s = socket.socket()
     try:
         s.settimeout(2)
         s.connect((str(host), int(port)))
-        msg['version']=custom.version
+        msg['version'] = custom.version
         s.send(tools.package(msg))
         response = s.recv(MAX_MESSAGE_SIZE)
         #print(response)
@@ -44,6 +52,8 @@ def connect(msg, host, port):
     except Exception as e:
         #print('THE ERROR WAS: ' +str(e))
         #print('disconnect')
-        return {'error':'error'}
+        return {'error': e}
 
-def send_command(peer, msg): return connect(msg, peer[0], peer[1])
+
+def send_command(peer, msg):
+    return connect(msg, peer[0], peer[1])

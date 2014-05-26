@@ -99,7 +99,7 @@ def peers_check(peers, DB):
 
             blocks = cmd({'type': 'rangeRequest',
                           'range': bounds(length, peers_block_count, DB)})
-            if type(blocks) != type([1, 2]):
+            if not isinstance(blocks, list):
                 return []
             for i in range(2):  # Only delete a max of 2 blocks, otherwise a
                 # peer might trick us into deleting everything over and over.
@@ -125,7 +125,7 @@ def peers_check(peers, DB):
             return []
 
         block_count = cmd({'type': 'blockCount'})
-        if type(block_count) != type({'a': 1}):
+        if not isinstance(block_count, dict):
             return
         if 'error' in block_count.keys():
             return

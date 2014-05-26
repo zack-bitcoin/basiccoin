@@ -111,7 +111,7 @@ def hexInvert(n):
 
 
 def target(DB, length=0):
-    # Returns the target difficulty at a paticular blocklength.
+    """ Returns the target difficulty at a paticular blocklength. """
     if length == 0:
         length = DB['length']
     if length < 4:
@@ -128,10 +128,11 @@ def target(DB, length=0):
         return [custom.inflection ** (length-i) for i in range(length)]
 
     def estimate_target(DB):
-        # We are actually interested in the average number of hashes requred
-        # to mine a block. number of hashes required is inversely proportional
-        # to target. So we average over inverse-targets, and inverse the final
-        # answer.
+        """
+        We are actually interested in the average number of hashes requred to
+        mine a block. number of hashes required is inversely proportional
+        to target. So we average over inverse-targets, and inverse the final
+        answer. """
         def sumTargets(l):
             if len(l) < 1:
                 return 0
@@ -161,9 +162,10 @@ def target(DB, length=0):
 
 
 def add_block(block, DB):
-    # Attempts adding a new block to the blockchain.
-    # Median is good for weeding out liars, so long as
-    def median(mylist):  # the liars don't have 51% hashpower.
+    """Attempts adding a new block to the blockchain.
+     Median is good for weeding out liars, so long as the liars don't have 51%
+     hashpower. """
+    def median(mylist):
         if len(mylist) < 1:
             return 0
         return sorted(mylist)[len(mylist) / 2]
@@ -231,7 +233,7 @@ def add_block(block, DB):
 
 
 def delete_block(DB):
-    # Removes the most recent block from the blockchain.
+    """ Removes the most recent block from the blockchain. """
     if DB['length'] < 0:
         return
     try:
