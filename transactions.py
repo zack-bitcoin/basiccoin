@@ -13,15 +13,7 @@ def addr(tx):
 def spend_verify(tx, txs, DB):
 
     def sigs_match(sigs, pubs, msg):
-        for sig in sigs:
-            for pub in pubs:
-                try:
-                    if tools.verify(msg, sig, pub):
-                        sigs.remove(sig)
-                        pubs.remove(pub)
-                except:
-                    pass
-        return len(sigs) == 0
+        return all(tools.verify(msg, sig, pub) for sig in sigs for pub in pubs)
 
     tx_copy = copy.deepcopy(tx)
     tx_copy_2 = copy.deepcopy(tx)
