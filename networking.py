@@ -33,7 +33,7 @@ def serve_forever(message_handler_func, PORT, queue):
         data = client.recv(MAX_MESSAGE_SIZE)
         #we could insert security checks here
         data = tools.unpackage(data)
-        client.send(tools.package(message_handler_func(data, queue)))
+        client.sendall(tools.package(message_handler_func(data, queue)))
 
 
 def connect(msg, host, port):
@@ -45,7 +45,7 @@ def connect(msg, host, port):
         s.settimeout(2)
         s.connect((str(host), int(port)))
         msg['version'] = custom.version
-        s.send(tools.package(msg))
+        s.sendall(tools.package(msg))
         response = s.recv(MAX_MESSAGE_SIZE)
         #print(response)
         return tools.unpackage(response)
