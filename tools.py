@@ -1,5 +1,6 @@
 import pt
 import custom
+from json import dumps as package, loads as unpackage
 from collections import OrderedDict
 
 #def pub2addr(pubkey): return pt.pubtoaddr(pubkey)
