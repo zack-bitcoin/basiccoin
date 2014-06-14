@@ -20,13 +20,16 @@ def privtopub(privkey):
 
 def det_hash(x):
     """Deterministically takes sha256 of dict, list, int, or string."""
-    if isinstance(x, list):
-        return custom.hash_(str(sorted(x)))
-    elif isinstance(x, dict):
-        return custom.hash_(str(OrderedDict(sorted(x.items(),
-                                                   key=lambda t: t[0]))))
-    else:
-        return custom.hash_(x)
+
+    def det_list(l): return '[%s]' % ','.join(map(det, sorted(l)))
+
+    def det_dict(x):
+        list_=map(lambda p: det(p[0]) + ':' + det(p[1]), sorted(x.items()))
+        return '{%s}' % ','.join(list_)
+
+    def det(x): return {list: det_list, dict: det_dict}.get(type(x), str)(x)
+
+    return custom.hash_(det(unpackage(package(x))))
 
 
 def base58_encode(num):
