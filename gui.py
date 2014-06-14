@@ -59,7 +59,7 @@ def home(DB, dic):
     privkey = dic['privkey']
     pubkey = tools.privtopub(dic['privkey'])
     address = tools.make_address([pubkey], 1)
-    if 'do' in dic.keys():
+    if 'do' in dic:
         if dic['do'] == 'spend':
             spend(float(dic['amount']), pubkey, privkey, dic['to'], DB)
     out = empty_page

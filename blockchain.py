@@ -31,9 +31,9 @@ def count(address, DB):
     # Returns the number of transactions that pubkey has broadcast.
 
     def zeroth_confirmation_txs(address, DB):
-        def func(t):
+        def is_zero_conf(t):
             address == tools.make_address(t['pubkeys'], len(t['signatures']))
-        return len(filter(func, DB['txs']))
+        return len(filter(is_zero_conf, DB['txs']))
 
     current = db_get(address, DB)['count']
     return current+zeroth_confirmation_txs(address, DB)

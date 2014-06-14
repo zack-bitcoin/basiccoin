@@ -33,6 +33,7 @@ peers = [['localhost', 8901],
          ['localhost', 8905]]
 hashes_per_check = 10 ** 5
 
+num_procs = 4 # Number of processes to spawn for mining.
 
 def blocktime(length):
     if length * block_reward < premine:

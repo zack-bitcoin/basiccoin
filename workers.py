@@ -1,6 +1,7 @@
 import consensus
 import listener
-import multiprocessing
+import time
+import threading
 import custom
 import leveldb
 import networking
@@ -20,7 +21,7 @@ DB = {'db': db,
 worker_tasks = [
     # Keeps track of blockchain database, checks on peers for new blocks and
     # transactions.
-    {'target': consensus.miner,
+    {'target': consensus.miner_controller,
      'args': (custom.pubkey, custom.peers, custom.hashes_per_check, DB),
      'daemon': True},
     {'target': consensus.mainloop,
@@ -40,20 +41,17 @@ networking.kill_processes_using_ports([str(custom.gui_port),
 
 
 def start_worker_proc(**kwargs):
-    print("Inithing proc.")
+    print("Making worker thread.")
     is_daemon = kwargs.pop('daemon', True)
-    proc = multiprocessing.Process(**kwargs)
+    proc = threading.Thread(**kwargs)
     proc.daemon = is_daemon
     proc.start()
     return proc
 
 workers = [start_worker_proc(**task_info) for task_info in worker_tasks]
 try:
-    for worker in workers:
-        print("Creating worker")
-        worker.join()
-except KeyboardInterrupt:
+    while True:
+        time.sleep(100)
+except:
     print("Exiting.")
-    for worker in workers:
-        worker.terminate()
     sys.exit(1)
