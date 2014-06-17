@@ -24,13 +24,12 @@ def peers_check(peers, DB):
         def download_blocks(peer, DB, peers_block_count, length):
 
             def fork_check(newblocks, DB):
-                length = copy.deepcopy(DB['length'])
-                block = blockchain.db_get(length, DB)
+                block = blockchain.db_get(DB['length'], DB)
                 recent_hash = tools.det_hash(block)
                 their_hashes = map(tools.det_hash, newblocks)
-                return recent_hash not in map(tools.det_hash, newblocks)
+                return recent_hash not in their_hashes
 
-            def bounds(length, peers_block_count, DB):
+            def bounds(length, peers_block_count):
                 if peers_block_count['length'] - length > custom.download_many:
                     end = length + custom.download_many - 1
                 else:
@@ -38,21 +37,19 @@ def peers_check(peers, DB):
                 return [max(length - 2, 0), end]
 
             blocks = cmd({'type': 'rangeRequest',
-                          'range': bounds(length, peers_block_count, DB)})
+                          'range': bounds(length, peers_block_count)})
             if not isinstance(blocks, list):
                 return []
             for i in range(2):  # Only delete a max of 2 blocks, otherwise a
                 # peer might trick us into deleting everything over and over.
                 if fork_check(blocks, DB):
                     blockchain.delete_block(DB)
-            for block in blocks:
-                DB['suggested_blocks'].append(block)
+            DB['suggested_blocks'].extend(blocks)
             return
 
         def ask_for_txs(peer, DB):
             txs = cmd({'type': 'txs'})
-            for tx in txs:
-                DB['suggested_txs'].append(tx)
+            DB['suggested_txs'].extend(txs)
             pushers = [x for x in DB['txs'] if x not in txs]
             for push in pushers:
                 cmd({'type': 'pushtx', 'tx': push})
@@ -165,8 +162,7 @@ def miner_controller(reward_address, peers, hashes_till_check, DB):
             txs = DB['txs']
             candidate_block = make_block(prev_block, txs, reward_address, DB)
 
-        work = (candidate_block, hashes_till_check,
-                blockchain.target(DB, candidate_block['length']))
+        work = (candidate_block, hashes_till_check)
 
         for worker_mailbox in worker_mailboxes:
             worker_mailbox['work_queue'].put(copy.copy(work))
@@ -180,12 +176,12 @@ def miner_controller(reward_address, peers, hashes_till_check, DB):
 
 
 def miner(block_submit_queue, get_work_queue, restart_signal):
-    def POW(block, hashes, target):
+    def POW(block, hashes):
         halfHash = tools.det_hash(block)
         block[u'nonce'] = random.randint(0, 100000000000000000)
         count = 0
         while tools.det_hash({u'nonce': block['nonce'],
-                              u'halfHash': halfHash}) > target:
+                              u'halfHash': halfHash}) > block['target']:
             count += 1
             block[u'nonce'] += 1
             if count > hashes:
@@ -205,14 +201,14 @@ def miner(block_submit_queue, get_work_queue, restart_signal):
         # been solved by another worker.
         try:
             if need_new_work or block_header is None:
-                block_header, hashes_till_check, target = get_work_queue.get(True, 1)
+                block_header, hashes_till_check = get_work_queue.get(True, 1)
                 need_new_work = False
         # Try to optimistically get the most up-to-date work.
         except Empty:
             need_new_work = False
             continue
 
-        possible_block = POW(block_header, hashes_till_check, target)
+        possible_block = POW(block_header, hashes_till_check)
         if 'error' in possible_block:  # We hit the hash ceiling.
             continue
         # Another worker found the block.

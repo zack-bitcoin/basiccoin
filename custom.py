@@ -35,6 +35,6 @@ hashes_per_check = 10 ** 5
 
 def blocktime(length):
     if length * block_reward < premine:
-        return 30
+        return 30  # seconds
     else:
         return 60

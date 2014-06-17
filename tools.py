@@ -55,6 +55,4 @@ def make_address(pubkeys, n):
 
 
 def buffer_(str_to_pad, size):
-    if len(str_to_pad) < size:
-        return buffer_('0' + str_to_pad, size)
-    return str_to_pad
+    return str_to_pad.rjust(size, '0')
