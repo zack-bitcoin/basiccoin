@@ -163,8 +163,7 @@ def miner_controller(reward_address, peers, hashes_till_check, DB):
             txs = DB['txs']
             candidate_block = make_block(prev_block, txs, reward_address, DB)
 
-        work = (candidate_block, hashes_till_check,
-                blockchain.target(DB, candidate_block['length']))
+        work = (candidate_block, hashes_till_check)
 
         for worker_mailbox in worker_mailboxes:
             worker_mailbox['work_queue'].put(copy.copy(work))
@@ -178,12 +177,12 @@ def miner_controller(reward_address, peers, hashes_till_check, DB):
 
 
 def miner(block_submit_queue, get_work_queue, restart_signal):
-    def POW(block, hashes, target):
+    def POW(block, hashes):
         halfHash = tools.det_hash(block)
         block[u'nonce'] = random.randint(0, 100000000000000000)
         count = 0
         while tools.det_hash({u'nonce': block['nonce'],
-                              u'halfHash': halfHash}) > target:
+                              u'halfHash': halfHash}) > block['target']:
             count += 1
             block[u'nonce'] += 1
             if count > hashes:
@@ -203,14 +202,14 @@ def miner(block_submit_queue, get_work_queue, restart_signal):
         # been solved by another worker.
         try:
             if need_new_work or block_header is None:
-                block_header, hashes_till_check, target = get_work_queue.get(True, 1)
+                block_header, hashes_till_check = get_work_queue.get(True, 1)
                 need_new_work = False
         # Try to optimistically get the most up-to-date work.
         except Empty:
             need_new_work = False
             continue
 
-        possible_block = POW(block_header, hashes_till_check, target)
+        possible_block = POW(block_header, hashes_till_check)
         if 'error' in possible_block:  # We hit the hash ceiling.
             continue
         # Another worker found the block.
