@@ -122,7 +122,7 @@ def target(DB, length=0):
 
     def estimate_target(DB):
         """
-        We are actually interested in the average number of hashes requred to
+        We are actually interested in the average number of hashes required to
         mine a block. number of hashes required is inversely proportional
         to target. So we average over inverse-targets, and inverse the final
         answer. """
