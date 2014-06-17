@@ -12,7 +12,7 @@ def main(dic, DB):
         if 'version' not in dic or dic['version'] != custom.version:
             return {'bool': False, 'error': 'version'}
         else:
-            #we could add security freatures here.
+            #we could add security features here.
             return {'bool': True, 'newdic': dic}
 
     def blockCount(dic, DB):

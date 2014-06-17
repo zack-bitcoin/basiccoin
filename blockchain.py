@@ -46,9 +46,6 @@ def add_tx(tx, DB):
     def verify_count(tx, txs):
         return tx['count'] != count(address, DB)
 
-    def tx_type_check(tx, txs):
-        return not isinstance(tx, dict)
-
     def type_check(tx, txs):
         if 'type' not in tx:
             return True
@@ -67,10 +64,6 @@ def add_tx(tx, DB):
         if verify_count(tx, txs):
             return False
         if too_big_block(tx, txs):
-            return False
-        if 'start' in tx and DB['length'] < tx['start']:
-            return False
-        if 'end' in tx and DB['length'] > tx['end']:
             return False
         return transactions.tx_check[tx['type']](tx, txs, DB)
 

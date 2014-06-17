@@ -91,5 +91,4 @@ def hex2htmlPicture(string, size):
 def main(port, brain_wallet, db):
     global DB
     DB = db
-    #ip = ''
     http.server(DB, port, page1, home)
