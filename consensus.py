@@ -24,8 +24,7 @@ def peers_check(peers, DB):
         def download_blocks(peer, DB, peers_block_count, length):
 
             def fork_check(newblocks, DB):
-                length = copy.deepcopy(DB['length'])
-                block = blockchain.db_get(length, DB)
+                block = blockchain.db_get(DB['length'], DB)
                 recent_hash = tools.det_hash(block)
                 their_hashes = map(tools.det_hash, newblocks)
                 return recent_hash not in their_hashes
