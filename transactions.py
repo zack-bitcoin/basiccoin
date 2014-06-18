@@ -42,11 +42,12 @@ def mint_verify(tx, txs, DB):
     return 0 == len(filter(lambda t: t['type'] == 'mint', txs))
 tx_check = {'spend': spend_verify, 'mint': mint_verify}
 #------------------------------------------------------
+#DB['add_block']=True -> adding a block.
 
-
-def adjust(key, pubkey, amount, DB):
+def adjust(key, pubkey, amount, DB, sign=1):
     acc = blockchain.db_get(pubkey, DB)
-    acc[key] += amount
+    if not DB['add_block']: sign=-1
+    acc[key] += amount*sign
     blockchain.db_put(pubkey, acc, DB)
 
 
@@ -61,20 +62,5 @@ def spend(tx, DB):
     adjust('amount', address, -tx['amount'], DB)
     adjust('amount', tx['to'], tx['amount'] - custom.fee, DB)
     adjust('count', address, 1, DB)
-add_block = {'mint': mint, 'spend': spend}
+update = {'mint': mint, 'spend': spend}
 #-----------------------------------------
-
-
-def unmint(tx, DB):
-    address = addr(tx)
-    adjust('amount', address, -custom.block_reward, DB)
-    adjust('count', address, -1, DB)
-
-
-def unspend(tx, DB):
-    address = addr(tx)
-    adjust('amount', address, tx['amount'], DB)
-    adjust('amount', tx['to'], custom.fee - tx['amount'], DB)
-    adjust('count', address, -1, DB)
-delete_block = {'mint': unmint, 'spend': unspend}
-#------------------------------------------------

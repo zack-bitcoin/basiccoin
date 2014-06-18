@@ -220,7 +220,8 @@ def add_block(block, DB):
         orphans = copy.deepcopy(DB['txs'])
         DB['txs'] = []
         for tx in block['txs']:
-            transactions.add_block[tx['type']](tx, DB)
+            DB['add_block']=True
+            transactions.update[tx['type']](tx, DB)
         for tx in orphans:
             add_tx(tx, DB)
 
@@ -242,7 +243,8 @@ def delete_block(DB):
     DB['txs'] = []
     for tx in block['txs']:
         orphans.append(tx)
-        transactions.delete_block[tx['type']](tx, DB)
+        DB['add_block']=False
+        transactions.update[tx['type']](tx, DB)
     db_delete(DB['length'], DB)
     DB['length'] -= 1
     if DB['length'] == -1:
