@@ -37,6 +37,8 @@ def serve_forever(message_handler_func, PORT, queue):
 
 
 def connect(msg, host, port):
+    msg['version'] = custom.version
+    msg = tools.package(msg)
     if len(msg) < 1 or len(msg) > MAX_MESSAGE_SIZE:
         print('wrong sized message')
         return
@@ -44,8 +46,7 @@ def connect(msg, host, port):
     try:
         s.settimeout(2)
         s.connect((str(host), int(port)))
-        msg['version'] = custom.version
-        s.sendall(tools.package(msg))
+        s.sendall(msg)
         response = s.recv(MAX_MESSAGE_SIZE)
         #print(response)
         return tools.unpackage(response)
