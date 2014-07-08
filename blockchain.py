@@ -32,7 +32,7 @@ def count(address, DB):
 
     def zeroth_confirmation_txs(address, DB):
         def is_zero_conf(t):
-            address == tools.make_address(t['pubkeys'], len(t['signatures']))
+            return address == tools.make_address(t['pubkeys'], len(t['signatures']))
         return len(filter(is_zero_conf, DB['txs']))
 
     current = db_get(address, DB)['count']
