@@ -13,19 +13,7 @@ INSTALL (for ubuntu)
 
 To run 1 node
 
-    python threads.py
-
-To quickly run 5 nodes (linux/mac only)
-
-    ./go.sh
-
-Then send your browser to 
-
-    http://localhost:8701
-    http://localhost:8702
-    http://localhost:8703
-    http://localhost:8704
-    http://localhost:8705
+    python workers.py
 
 ###Why do we need a simple currency
 
