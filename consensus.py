@@ -178,7 +178,7 @@ def miner_controller(reward_address, peers, hashes_till_check, DB):
 def miner(block_submit_queue, get_work_queue, restart_signal):
     def POW(block, hashes):
         halfHash = tools.det_hash(block)
-        block[u'nonce'] = random.randint(0, 100000000000000000)
+        block[u'nonce'] = random.randint(0, 10000000000000000000000000000000000000000)
         count = 0
         while tools.det_hash({u'nonce': block['nonce'],
                               u'halfHash': halfHash}) > block['target']:
