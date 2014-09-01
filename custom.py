@@ -1,13 +1,9 @@
-"""This is for easy customization of new currencies."""
-import tools
-import hashlib
-
-
-def hash_(x):
-    return hashlib.sha256(x).hexdigest()
+"""This is to make magic numbers easier to deal with."""
+import tools, hashlib
+peers = [['127.0.0.1', 8900]]
 database_name = 'DB.db'
-listen_port = 8900
-gui_port = 8700
+port=8901
+basicd_port=8801
 version = "VERSION"
 block_reward = 10 ** 5
 premine = 5 * 10 ** 6
@@ -21,20 +17,6 @@ history_length = 400
 # This constant is selected such that the 50 most recent blocks count for 1/2 the
 # total weight.
 inflection = 0.985
-download_many = 500  # Max number of blocks to request from a peer at the same time.
+download_many = 50  # Max number of blocks to request from a peer at the same time.
 max_download = 50000
-brainwallet = 'brain wallet'
-privkey = tools.det_hash(brainwallet)
-pubkey = tools.privtopub(privkey)
-peers = [['localhost', 8901],
-         ['localhost', 8902],
-         ['localhost', 8903],
-         ['localhost', 8904],
-         ['localhost', 8905]]
-hashes_per_check = 10 ** 5
-
-def blocktime(length):
-    if length * block_reward < premine:
-        return 30  # seconds
-    else:
-        return 60
+def blocktime(length): return 30
