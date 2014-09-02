@@ -1,4 +1,4 @@
-"""This is the internal API for truthshell. These are the words that are used to interact with the blockchain.
+"""This is the internal API for basicshell. These are the words that are used to interact with the blockchain.
 """
 import copy, tools, blockchain, custom, random, transactions, sys, txs_tools, time, networking
 def easy_add_transaction(tx_orig, DB):

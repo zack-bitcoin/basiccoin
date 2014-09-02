@@ -7,7 +7,7 @@ if True:
     o_queue=multiprocessing.Queue()
     heart_queue=multiprocessing.Queue()
     suggested_blocks=multiprocessing.Queue()
-    o_queue.put('''Truthshell, use 'help help' to learn about the help system''')
+    o_queue.put('''Basicshell, use 'help help' to learn about the help system''')
     try:
         script=file(sys.argv[1],'r').read()
     except: script=''
@@ -78,7 +78,7 @@ if True:
 
     #print('tasks: ' + str(worker_tasks))
     workers = [start_worker_proc(**task_info) for task_info in worker_tasks]
-    print('use "./truthd" in a different terminal to interact with the system.')
+    print('use "./basicd" in a different terminal to interact with the system.')
     while not DB['stop']:
         time.sleep(0.5)
     tools.log('stopping all threads...')
