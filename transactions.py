@@ -2,26 +2,28 @@
 how we update the database when new transactions are added to the blockchain."""
 import blockchain, custom, copy, tools, txs_tools
 E_check=tools.E_check
-def spend_verify(tx, txs, DB):
-    def sigs_match(sigs, pubs, msg):
-        return all(tools.verify(msg, sig, pub) for sig in sigs for pub in pubs)
+def sigs_match(Sigs, Pubs, msg):
+    pubs=copy.deepcopy(Pubs)
+    sigs=copy.deepcopy(Sigs)
+    def match(sig, pubs, msg):
+        for p in pubs:
+            if tools.verify(msg, sig, p):
+                return {'bool':True, 'pub':pub}
+        return {'bool':False}
+    for sig in sigs:
+        a=match(sig, pubs, msg)
+        if not a['bool']:
+            return False
+        sigs.pop(sig)
+        pubs.pop(a['pub'])
+    return True
+def signature_check(tx):
     tx_copy = copy.deepcopy(tx)
-    tx_copy_2 = copy.deepcopy(tx)
-    if not E_check(tx, 'to', [str, unicode]):
-        tools.log('no to')
-        return False
-    if len(tx['to'])<=30:
-        tools.log('that address is too short')
-        tools.log('tx: ' +str(tx))
-        return False
     if not E_check(tx, 'signatures', list):
         tools.log('no signautres')
         return False
     if not E_check(tx, 'pubkeys', list):
         tools.log('no pubkeys')
-        return False
-    if not E_check(tx, 'amount', int):
-        tools.log('no amount')
         return False
     tx_copy.pop('signatures')
     if len(tx['pubkeys']) == 0:
@@ -35,6 +37,23 @@ def spend_verify(tx, txs, DB):
                       copy.deepcopy(tx['pubkeys']), msg):
         tools.log('sigs do not match')
         return False
+    return True
+def spend_verify(tx, txs, DB):
+    if not E_check(tx, 'to', [str, unicode]):
+        tools.log('no to')
+        return False
+    if not signature_check(tx):
+        tools.log('signature check')
+        return False
+    if len(tx['to'])<=30:
+        tools.log('that address is too short')
+        tools.log('tx: ' +str(tx))
+        return False
+        return False
+    if not E_check(tx, 'amount', int):
+        tools.log('no amount')
+        return False
+    tx_copy.pop('signatures')
     if not txs_tools.fee_check(tx, txs, DB):
         tools.log('fee check error')
         return False
