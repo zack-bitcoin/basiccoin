@@ -8,10 +8,10 @@ def security_check(dic):
         #we could add security features here.
         return {'bool': True, 'newdic': dic}
 def blockCount(dic, DB):
-    length = DB['length']
+    length = tools.db_get('length')
     if length >= 0:
         return {'length': length,
-                'diffLength': DB['diffLength']}
+                'diffLength': tools.db_get('diffLength')}
     else:
         return {'length': -1, 'diffLength': '0'}
 def rangeRequest(dic, DB):
@@ -26,16 +26,23 @@ def rangeRequest(dic, DB):
         counter += 1
     return out
 def txs(dic, DB):
-    return DB['txs']
+    return tools.db_get('txs')
 def pushtx(dic, DB):
     DB['suggested_txs'].put(dic['tx'])
     return 'success'
 def pushblock(dic, DB):
+    length=tools.db_get('length')
+    block = tools.db_get(length, DB)    
+    if 'peer' in dic: peer=dic['peer']
+    else: peer=False
     if 'blocks' in dic:
+        for i in range(20):
+            if tools.fork_check(dic['blocks'], DB, length, block):
+                blockchain.delete_block(DB)
         for block in dic['blocks']:
-            DB['suggested_blocks'].put([block, dic['peer']])
+            DB['suggested_blocks'].put([block, peer])
     else:
-        DB['suggested_blocks'].put([dic['block'], dic['peer']])
+        DB['suggested_blocks'].put([dic['block'], peer])
     return 'success'
 def main(dic, DB):
     funcs = {'blockCount': blockCount, 'rangeRequest': rangeRequest,

@@ -1,93 +1,71 @@
-"""This program starts all the threads going. When it hears a kill signal, it kills all the threads and packs up the database.
+"""This program starts all the threads going. When it hears a kill signal, it kills all the threads.
 """
-import miner, peer_recieve, time, threading, tools, custom, leveldb, networking, sys, api, blockchain, peers_check, multiprocessing, Queue
-
-if True:
-    i_queue=multiprocessing.Queue()
-    o_queue=multiprocessing.Queue()
-    heart_queue=multiprocessing.Queue()
-    suggested_blocks=multiprocessing.Queue()
-    o_queue.put('''Basicshell, use 'help help' to learn about the help system''')
-    try:
-        script=file(sys.argv[1],'r').read()
-    except: script=''
-    db = leveldb.LevelDB(custom.database_name)
-    DB = {'stop':False,
-          'mine':False,
-          'db': db,
-          'txs': [],
-          'suggested_blocks': suggested_blocks,
-          'suggested_txs': Queue.Queue(),
-          'heart_queue': heart_queue,
-          'memoized_votes':{},
-          'peers_ranked':[],
-          'brainwallet':'brain wallet',
-          'diffLength': '0'}
-    DB['privkey']=tools.det_hash(DB['brainwallet'])
-    DB['pubkey']=tools.privtopub(DB['privkey'])
-    DB['address']=tools.make_address([DB['pubkey']], 1)
-    def len_f(i, DB):
-        if not tools.db_existence(str(i), DB): return i-1
-        return len_f(i+1, DB)
-    DB['length']=len_f(0, DB)
-    DB['diffLength']='0'
-    if DB['length']>-1:
-        DB['diffLength']=tools.db_get(str(DB['length']), DB)['diffLength']
-
-    worker_tasks = [
-        # Keeps track of blockchain database, checks on peers for new blocks and
-        # transactions.
-        #all these workers share memory DB
-        #if any one gets blocked, then they are all blocked.
-        {'target': api.main,
-         'args': (DB, heart_queue),
-         'daemon':True},
-        {'target': blockchain.suggestion_txs,
-         'args': (DB,),
-         'daemon': True},
-        {'target': blockchain.suggestion_blocks,
-         'args': (DB,),
-         'daemon': True},
-        {'target': miner.main,
-         'args': (DB['pubkey'], DB),
-         'daemon': False},
+import ht, peer_recieve, time, threading, tools, custom, networking, sys, api, blockchain, peers_check, multiprocessing, database
+def main(brainwallet, pubkey_flag=False):
+    print('starting truthcoin')
+    if not pubkey_flag:
+        privkey=tools.det_hash(brainwallet)
+        pubkey=tools.privtopub(privkey)
+    else:
+        pubkey=brainwallet
+    DB = {
+        'reward_peers_queue':multiprocessing.Queue(),
+        'suggested_blocks': multiprocessing.Queue(),
+        'suggested_txs': multiprocessing.Queue(),
+        'heart_queue': multiprocessing.Queue(),
+    }
+    processes= [
+        {'target': database.main,
+         'args': (DB['heart_queue'],)},
         {'target': peers_check.main,
-         'args': (custom.peers, DB),
-         'daemon': True},
-        {'target': networking.serve_forever,
-         'args': (custom.port, lambda d: peer_recieve.main(d, DB), heart_queue, DB),
-         'daemon': True}
-    ]
-    processes= [#these do NOT share memory with the rest.
+         'args': (custom.peers, DB)},
         {'target':tools.heart_monitor,
-         'args':(heart_queue, )}
+         'args':(DB['heart_queue'], )},
+        {'target': blockchain.main,
+         'args': (DB,)},
+        {'target': api.main,
+         'args': (DB, DB['heart_queue'])},
+        {'target': networking.serve_forever,
+         'args': (lambda d: peer_recieve.main(d, DB), custom.port, DB['heart_queue'], True)}
     ]
     cmds=[]
-    for process in processes:
+    cmd=multiprocessing.Process(target=processes[0]['target'], args=processes[0]['args'])
+    cmd.start()
+    time.sleep(4)
+    cmds.append(cmd)
+    tools.db_put('test', 'TEST')
+    tools.db_get('test')
+    tools.db_put('test', 'n')
+    b=tools.db_existence(0)
+    if not b:
+        tools.db_put('length', -1)
+        tools.db_put('memoized_votes', {})
+        tools.db_put('txs', [])
+        tools.db_put('peers_ranked', [])
+        tools.db_put('targets', {})
+        tools.db_put('times', {})
+        tools.db_put('diffLength', '0')
+    tools.db_put('stop', False)
+    for process in processes[1:]:
         cmd=multiprocessing.Process(target=process['target'], args=process['args'])
         cmd.start()
         cmds.append(cmd)
-        time.sleep(1)
-    def start_worker_proc(**kwargs):
-        #print("Making worker thread.")
-        daemon=kwargs.pop('daemon', True)
-        proc = threading.Thread(**kwargs)
-        proc.daemon = daemon
-        proc.start()
-        return proc
-
-    #print('tasks: ' + str(worker_tasks))
-    workers = [start_worker_proc(**task_info) for task_info in worker_tasks]
-    print('use "./basicd" in a different terminal to interact with the system.')
-    while not DB['stop']:
+    if not pubkey_flag:
+        tools.db_put('privkey', privkey)
+    else:
+        tools.db_put('privkey', 'Default')
+    tools.db_put('address', tools.make_address([pubkey], 1))
+    while not tools.db_get('stop'):
         time.sleep(0.5)
-    tools.log('stopping all threads...')
+    tools.log('about to stop threads')
     DB['heart_queue'].put('stop')
-    #the next part does not work at all. DB['db'] needs to get cleaned as well.
-    for worker in workers:
-        worker.join()
+    for p in [[custom.port, '127.0.0.1'], [custom.api_port, 'localhost'], [custom.database_port, 'localhost']]:
+        networking.connect('stop', p[0], p[1])
+        networking.connect('stop', p[0], p[1])
     for cmd in cmds:
         cmd.join()
-    del DB['db']
+        tools.log('stopped a thread')
+    tools.log('all threads stopped')
+    print('all threads stopped')
     sys.exit(1)
 

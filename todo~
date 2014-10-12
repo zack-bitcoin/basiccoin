@@ -1,0 +1,3 @@
+require 1/2 of pos signatures to make a block.
+if you skip n blocks, charge normal fee*2^n
+pos signers need to give a deposit

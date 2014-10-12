@@ -1,45 +1,49 @@
-basiccoin
+Truthcoin-POW
 =============
+
+adding abilities from the truthcoin project to basiccoin. https://github.com/psztorc/Truthcoin
 
 Donations: 1GbpRPE83Vjg73KFvTVZ4EnS2qNkiLY5TT
 
-INSTALL (for ubuntu)
+=====INSTALL 
+for Ubuntu
 
-    sudo apt-get install git
-    sudo apt-get install python-leveldb
-    git clone https://github.com/zack-bitcoin/basiccoin.git
-    cd basiccoin
+    sudo apt-get update
+    sudo apt-get install python-numpy git
+    git clone https://github.com/zack-bitcoin/Truthcoin-POW.git
+    cd Truthcoin-POW
 
-To run a basiccoin node
+for Arch Linux)
 
-    python threads.py
+    sudo pacman -S python2-numpy python2-pip
+    git clone https://github.com/zack-bitcoin/Truthcoin-POW.git
+    cd Truthcoin-POW    
 
-Then to talk to basiccoin use:
+If you have trouble installing the dependencies in Arch Linux, you may want to update your mirror list with `reflector`.
+    sudo pacman -S reflector
+    reflector --verbose -l 200 -p http --sort rate --save /etc/pacman.d/mirrorlist
 
-    python basicd.py
+Be warned, **this will alter your system!** You may want to make a backup first.
+    sudo cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bk
+    #do your thing...
+    sudo mv /etc/pacman.d/mirrorlist.bk /etc/pacman.d/mirrorlist
 
-###Why do we need a simple currency
+====RUN A NODE
 
-At the time of writing this there exist over 100 cryptocurrencies with market caps of over $100,000. According to Andreas Antonopolous, we will soon live in a world with millions of altcoins. It is incredibly risky to try to add new features to an old crypto. There is a high probability that you will introduce a bug. To combat this, each currency will have only one purpose.
-Bitcoin currently has 40445 lines of C++ and assembly, not including gui or tests. Very few people are able to read bitcoin. It is incredibly difficulty to adapt without breaking everything. Because of how hard it is to adapt bitcoin, all the altcoins have been very simplistic. They change magic numbers, and the name, and little else.
+    ./threads.py
 
-When things get complicated, it is good to return to the basics.
-The purpose of basiccoin is to be the simplest secure currency possible. Basiccoin is designed to be easily modified to create new alts.
+It will take time to download the blockchain.
 
-###How do I read this?
+====TALK TO THE NODE
 
-This code is written functionally. Functions are only supposed to depend on functions that occur above them on the page. Generally people read such code starting at the bottom, because it is easier to understand the outline provided by high-level functions, instead of getting lost indetails of low-level functions.
+    ./truthd.py
 
-bottom-up style explained by a master: http://paulgraham.com/progbot.html
 
-###Why is this code so short?
 
-http://paulgraham.com/power.html
+For now, there is a 20-block cycle.
+1-10: votecoin-holders may give encrypted votes on decisions. (in the final version of truthcoin, this step will take 1000+ blocks)
+11-15: votecoin-holders may decrypt their votes
+16-20: if there are at least 3 votecoin-holders, and at least 5 decisions they have voted on, then we can do SVD to come to consensus about these decisions.
 
-###Features
 
-*   Blockchain
-*   mineable currency units
-*   can create unique addresses
-*   can spend the currency units to each other
-*   Multisig escrow
+
