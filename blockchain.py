@@ -81,12 +81,6 @@ def recent_blockthings(key, DB, size, length=0):
     start = max((length-size), 0)
     clean_up(storage, length-max(custom.mmm, custom.history_length)-100)
     return map(get_val, range(start, length))
-def hexSum(a, b):
-    # Sum of numbers expressed as hexidecimal strings
-    return tools.buffer_(str(hex(int(a, 16)+int(b, 16)))[2: -1], 64)
-def hexInvert(n):
-    # Use double-size for division, to reduce information leakage.
-    return tools.buffer_(str(hex(int('f' * 128, 16) / int(n, 16)))[2: -1], 64)
 def add_block(block_pair, DB):
     """Attempts adding a new block to the blockchain.
      Median is good for weeding out liars, so long as the liars don't have 51%
