@@ -5,11 +5,12 @@ import copy
 import custom
 import networking
 import transactions
-import sys
 import tools
 import target
+import database
 
-def add_tx(tx, DB):
+
+def add_tx(tx, DB={}):
     # Attempt to add a new transaction into the pool.
     #print('top of add_tx')
     out=['']
@@ -55,19 +56,20 @@ def add_tx(tx, DB):
         return('added tx: ' +str(tx))
     else:
         return('failed to add tx because: '+out[0])
-def recent_blockthings(key, DB, size, length=0):
+def recent_blockthings(key, size, length=0):
     storage = tools.db_get(key)
     def get_val(length):
         leng = str(length)
         if not leng in storage:            
-            try:
-                storage[leng] = tools.db_get(leng, DB)[key[:-1]]
-            except:
-                print('leng: ' +str(leng))
-                print('key: ' +str(key))
-                print('db_get: ' +str(tools.db_get(leng, DB)))
-                print('storage: ' +str(storage))
-                error()
+            block=tools.db_get(leng)
+            if block==database.default_entry():
+                if leng==tools.db_get('length'):
+                    tools.db_put('length', int(leng)-1)
+                    block=tools.db_get(leng)
+                else:
+                    error()
+            #try:
+            storage[leng] = tools.db_get(leng)[key[:-1]]
             tools.db_put(key, storage)
         return storage[leng]
     def clean_up(storage, end):
@@ -81,7 +83,13 @@ def recent_blockthings(key, DB, size, length=0):
     start = max((length-size), 0)
     clean_up(storage, length-max(custom.mmm, custom.history_length)-100)
     return map(get_val, range(start, length))
-def add_block(block_pair, DB):
+def hexSum(a, b):
+    # Sum of numbers expressed as hexidecimal strings
+    return tools.buffer_(str(hex(int(a, 16)+int(b, 16)))[2: -1], 64)
+def hexInvert(n):
+    # Use double-size for division, to reduce information leakage.
+    return tools.buffer_(str(hex(int('f' * 128, 16) / int(n, 16)))[2: -1], 64)
+def add_block(block_pair, DB={}):
     """Attempts adding a new block to the blockchain.
      Median is good for weeding out liars, so long as the liars don't have 51%
      hashpower. """
@@ -91,7 +99,6 @@ def add_block(block_pair, DB):
         return sorted(mylist)[len(mylist) / 2]
 
     def block_check(block, DB):
-        #put a check to see if we can afford to purchase this block.
         def log_(txt): pass #return tools.log(txt)
         def tx_check(txs):
             start = copy.deepcopy(txs)
@@ -118,11 +125,36 @@ def add_block(block_pair, DB):
         if int(block['length']) != int(length) + 1:
             log_('wrong longth')
             return False
+        if block['diffLength'] != hexSum(tools.db_get('diffLength'),
+                                         hexInvert(block['target'])):
+            log_('diflength error')
+            return False
         if length >= 0:
             if tools.det_hash(tools.db_get(length, DB)) != block['prevHash']:
                 log_('det hash error')
                 return False
-        #there should be at least 1/2 of all the signers signatures onto the previous block, otherwise this block isn't valid.
+        if u'target' not in block.keys():
+            log_('target error')
+            return False
+        half_way=tools.make_half_way(block)
+        if tools.det_hash(half_way) > block['target']:
+            log_('det hash error 2')
+            return False
+        if block['target'] != target.target(block['length']):
+            log_('block: ' +str(block))
+            log_('target: ' +str(target.target(block['length'])))
+            log_('wrong target')
+            return False
+        earliest = median(recent_blockthings('times', custom.mmm))
+        if 'time' not in block: 
+            log_('no time')
+            return False
+        if block['time'] > time.time()+60*6: 
+            log_('too late')
+            return False
+        if block['time'] < earliest: 
+            log_('too early')
+            return False
         if tx_check(block['txs']): 
             log_('tx check')
             return False
@@ -136,17 +168,18 @@ def add_block(block_pair, DB):
     #tools.log('attempt to add block: ' +str(block))
     if block_check(block, DB):
         #tools.log('add_block: ' + str(block))
-        old_length=tools.db_get('length')
-        gap=block['length']-old_length-1
-        tools.db_put(block['length'], block)
+        tools.db_put(block['length'], block, DB)
         tools.db_put('length', block['length'])
+        tools.db_put('diffLength', block['diffLength'])
         orphans = tools.db_get('txs')
         tools.db_put('txs', [])
-        txs_tools.adjust_int(['amount'], tools.addr(block), -custom.block_fee*2**gap, DB)
         for tx in block['txs']:
             transactions.update[tx['type']](tx, DB, True)
         for tx in orphans:
             add_tx(tx, DB)
+        #while tools.db_get('length')!=block['length']:
+        #    time.sleep(0.0001)
+
 def delete_block(DB):
     """ Removes the most recent block from the blockchain. """
     length=tools.db_get('length')
@@ -165,11 +198,8 @@ def delete_block(DB):
     except:
         pass
     block = tools.db_get(length, DB)
-    prev_block = tools.db_get(length-1, DB)
-    gap=bloc['length']-prev_block['length']-1
     orphans = tools.db_get('txs')
     tools.db_put('txs', [])
-    txs_tools.adjust_int(['amount'], tools.addr(block), custom.block_fee*2**gap, DB)
     for tx in block['txs']:
         orphans.append(tx)
         tools.db_put('add_block', False)
@@ -184,27 +214,38 @@ def delete_block(DB):
         tools.db_put('diffLength', block['diffLength'])
     for orphan in sorted(orphans, key=lambda x: x['count']):
         add_tx(orphan, DB)
-def f(blocks_queue, txs_queue, heart_queue, DB):
+    #while tools.db_get('length')!=length:
+    #    time.sleep(0.0001)
+def f(blocks_queue, txs_queue):
     def bb(): return blocks_queue.empty()
     def tb(): return txs_queue.empty()
     def ff(queue, g, b, s):
         while not b():
             time.sleep(0.0001)
             try:
-                g(queue.get(False), DB)
-            except:
-                tools.log('suggestions ' + s + ' '+str(sys.exc_info()))
-    heart_time=time.time()
-    t0=time.time()
+                g(queue.get(False))
+            except Exception as exc:
+                tools.log('suggestions ' + s)
+                tools.log(exc)
     while True:
-        time.sleep(0.5)
-        if tools.db_get('stop'): return
+        time.sleep(0.1)
+        if tools.db_get('stop'):
+            tools.dump_out(blocks_queue)
+            tools.dump_out(txs_queue)
+            return
         while not bb() or not tb():
-            t=time.time()
-            if t-heart_time>10:
-                heart_time=t
             ff(blocks_queue, add_block, bb, 'block')
             ff(txs_queue, add_tx, tb, 'tx')
-def main(DB):
-    return f(DB['suggested_blocks'], DB['suggested_txs'], DB['heart_queue'], DB)
+import cProfile
+def main(DB): return f(DB["suggested_blocks"], DB["suggested_txs"])
+def profile(DB):
+    import pprint
+    p=cProfile.Profile()
+    p.run('blockchain.main(custom.DB)')
+    g=p.getstats()
+    #g=g.sorted(lambda x: x.inlinetime)
+    g=sorted(g, key=lambda x: x.totaltime)
+    g.reverse()
+    pprint.pprint(g)
+    #return f(DB['suggested_blocks'], DB['suggested_txs'])
     

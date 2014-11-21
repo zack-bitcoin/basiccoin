@@ -1,1 +1,24 @@
-pos signers need to give a deposit
+Allow users to send shares to each other, but charge double trading fees.
+
+make sure that trading fees are rewarded to authors and voters correctly.
+
+Let users use liquidity-sensitive LMSR if they want.
+http://www.eecs.harvard.edu/cs286r/courses/fall12/papers/bmm-ec.pdf
+
+Let users use Paul's scalar LMSR for prediction markets if they want. in an excel demo on hig github.
+
+Let users use Zack's scalar LMSR for prediction markets if they want. in pc/scalars.py
+
+update verbage
+cashcoin/credit->cash
+votecoin->reputation
+jury/branch->topic
+decision->prediction
+
+maturation date
+
+any vote must block the coins from being sent until svd is over
+
+mini blockchain
+
+proof of stake

@@ -24,17 +24,18 @@ def serve_forever(handler, port, heart_queue='default', external=False):
     while True:
         try:
             a=serve_once(s, MAX_MESSAGE_SIZE, handler)
-            if a=='stop': 
+            if a=='stop':
                 s.close()
                 tools.log('shutting off server: ' +str(port))
                 return
-        except:
-            tools.log('networking error: ' +str(port) + ' ' + str(sys.exc_info()))
+        except Exception as exc:
+            tools.log('networking error: ' +str(port))
+            tools.log(exc)
 def recvall(client, data=''):
     try:
         data+=client.recv(MAX_MESSAGE_SIZE)
     except:
-        time.sleep(0.01)
+        time.sleep(0.0001)
         tools.log('not ready')
         recvall(client, data)        
     if not data:
@@ -79,7 +80,7 @@ def send_msg(data, sock):
     data=tools.package(data)
     data=tools.buffer_(str(len(data)), 5)+data
     while data:
-        time.sleep(0.01)
+        time.sleep(0.0001)
         try:
             sent = sock.send(data)
         except:

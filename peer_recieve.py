@@ -7,13 +7,16 @@ def security_check(dic):
     else:
         #we could add security features here.
         return {'bool': True, 'newdic': dic}
+def recieve_peer(dic, DB):
+    peer=dic['peer']
+    ps=tools.db_get('peers_ranked')
+    if peer[0] not in map(lambda x: x[0][0], ps):
+        tools.add_peer(peer)
 def blockCount(dic, DB):
     length = tools.db_get('length')
-    if length >= 0:
-        return {'length': length,
-                'diffLength': tools.db_get('diffLength')}
-    else:
-        return {'length': -1, 'diffLength': '0'}
+    d='0'
+    if length >= 0: d=tools.db_get('diffLength')
+    return {'length': length, 'diffLength': d}
 def rangeRequest(dic, DB):
     ran = dic['range']
     out = []
@@ -39,14 +42,16 @@ def pushblock(dic, DB):
         for i in range(20):
             if tools.fork_check(dic['blocks'], DB, length, block):
                 blockchain.delete_block(DB)
+                length-=1
         for block in dic['blocks']:
             DB['suggested_blocks'].put([block, peer])
     else:
         DB['suggested_blocks'].put([dic['block'], peer])
     return 'success'
+def peers(dic, DB): return tools.db_get('peers_ranked')
 def main(dic, DB):
-    funcs = {'blockCount': blockCount, 'rangeRequest': rangeRequest,
-             'txs': txs, 'pushtx': pushtx, 'pushblock': pushblock}
+    #tools.log(dic)
+    funcs = {'recieve_peer':recieve_peer, 'blockCount': blockCount, 'rangeRequest': rangeRequest,'txs': txs, 'pushtx': pushtx, 'pushblock': pushblock, 'peers':peers}
     if 'type' not in dic:
         return 'oops: ' +str(dic)
     if dic['type'] not in funcs:
@@ -56,5 +61,6 @@ def main(dic, DB):
         return check
     try:
         return funcs[dic['type']](check['newdic'], DB)
-    except:
-        pass
+    except Exception as exc:
+        tools.log(exc)
+
