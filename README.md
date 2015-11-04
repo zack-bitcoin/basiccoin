@@ -1,6 +1,9 @@
 BasicCoin
 =============
 
+This software is no longer being developed. It is not secure.
+I am working on this other blockchain now: https://github.com/BumblebeeBat/FlyingFox
+
 A very small POW blockchain
 
 Donations: 1GbpRPE83Vjg73KFvTVZ4EnS2qNkiLY5TT
