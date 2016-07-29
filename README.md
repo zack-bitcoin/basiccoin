@@ -11,6 +11,7 @@ Donations: 1GbpRPE83Vjg73KFvTVZ4EnS2qNkiLY5TT
 =====INSTALL 
 
     sudo pip2 install m3-cdecimal #for Mac use pip instead of pip2
+    sudo pip install leveldb
     #software can run without cdecimal, but it is slower.
     git clone https://github.com/zack-bitcoin/basiccoin.git
     cd basiccoin
