@@ -4,12 +4,12 @@ BasicCoin
 A very small POW blockchain
 
 This software is not a secure blockchain. It is a model to help learn how blockchains work.
-I am mostly work on this blockchain, which is actually designed to be secure: https://github.com/BumblebeeBat/FlyingFox
+I am mostly work on this blockchain, which is actually designed to be secure: https://github.com/zack-bitcoin/amoveo
 
 None of my python blockchains are secure because it is possible to send messages to them that make them crash. It is far easier to write Erlang code that wont crash than python code that wont crash.
 
 
-Donations: 1GbpRPE83Vjg73KFvTVZ4EnS2qNkiLY5TT
+Bitcoin Donations: 1GbpRPE83Vjg73KFvTVZ4EnS2qNkiLY5TT
 
 =====INSTALL 
 
