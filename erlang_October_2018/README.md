@@ -4,6 +4,8 @@ basiccoin
 A very simple blockchain.
 Based off of the Amoveo code base. https://github.com/zack-bitcoin/amoveo
 
+basiccoin = amoveo - (oracles and channels).
+
 First, to compile the software and start an erlang shell with the libraries loaded:
 `./rebar3 shell`
 

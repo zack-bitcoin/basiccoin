@@ -13,7 +13,6 @@
     dump,
     trie,
     pink_hash,
-    chalang,
     encrypter
    ]},
   {env,[]},
