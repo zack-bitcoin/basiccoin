@@ -1,0 +1,24 @@
+{application, basiccoin,
+ [{description, "simple blockchain"},
+  {vsn, "0.1.0"},
+  {registered, []},
+  {mod, { basiccoin_app, []}},
+  {applications,
+   [kernel,
+    stdlib,
+    ssl,
+    inets,
+    jiffy,
+    dump,
+    trie,
+    pink_hash,
+    chalang,
+    encrypter
+   ]},
+  {env,[]},
+  {modules, []},
+
+  {maintainers, []},
+  {licenses, []},
+  {links, []}
+ ]}.

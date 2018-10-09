@@ -1,0 +1,5 @@
+-module(constants).
+-compile(export_all).
+
+hash_size() -> 32.
+    
