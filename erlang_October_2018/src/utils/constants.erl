@@ -7,4 +7,5 @@ account_nonce_bits() -> 24.
 pubkey_size() -> 65.%bytes
 account_size() -> ((balance_bits() + account_nonce_bits()) div 8) + pubkey_size().
 root0() -> 1.
-    
+external_port() -> 8060.
+internal_port() -> 8061.

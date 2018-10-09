@@ -4,8 +4,8 @@
 
 -define(CHILD(I, Type), {I, {I, start_link, []}, permanent, 5000, Type, [I]}).
 -define(keys, []).
-
-start_link() -> supervisor:start_link({local, ?MODULE}, ?MODULE, []).
+start_link() -> 
+    supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 child_killer([]) -> [];
 child_killer([H|T]) -> 
     supervisor:terminate_child(testnet_sup, H),
@@ -25,4 +25,5 @@ init([]) ->
     HS = constants:hash_size(),
     Trees = [tree_child(accounts, HS, constants:account_size())],
     Children = child_maker(?keys),
+    io:fwrite("basiccoin sup"),
     {ok, { {one_for_one, 50000, 1}, Trees ++ Children} }.
