@@ -1,3 +1,0 @@
--module(sign2).
--export([new_key/0]).
-new_key() -> crypto:generate_key(ecdh, params()).

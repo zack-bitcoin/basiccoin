@@ -1,5 +1,0 @@
-
--module(ext_handler).
--include("../../amoveo_core/src/records.hrl").
-
--export([init/3, handle/2, terminate/3, doit/1]).
