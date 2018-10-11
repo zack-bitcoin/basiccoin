@@ -3,8 +3,8 @@
          root/1, tree/1, path/1, value/1,
          key/1]).
 -define(Header, 1).
+-include("../records.hrl").
 -record(proof, {tree, value, root, key, path}).
--include("../../records.hrl").
 
 root(X) -> X#proof.root.
 key(X) -> X#proof.key.
@@ -108,7 +108,8 @@ txs_to_querys2([], _, _) -> [];
 txs_to_querys2([STx|T], Trees, Height) ->
     Tx = testnet_sign:data(STx),
     PS = constants:pubkey_size() * 8,
-    element(1, Tx) = spend,
+    Spend = element(1, Tx),
+    Spend = spend,
     [
      {accounts, spend_tx:from(Tx)},
      {accounts, spend_tx:to(Tx)}

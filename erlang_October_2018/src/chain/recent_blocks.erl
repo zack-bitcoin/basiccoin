@@ -2,7 +2,7 @@
 -behaviour(gen_server).
 -export([start_link/0,code_change/3,handle_call/3,handle_cast/2,handle_info/2,init/1,terminate/2,
          read/0, add/3]).
--include("../../records.hrl").
+-include("../records.hrl").
 -define(LOC, constants:recent_blocks()).
 -record(r, {blocks = [], work = 0, save_limit = 0}).
 %We keep a record of the blocks with the heighest accumulative difficulty so that we know what we will need to prune.

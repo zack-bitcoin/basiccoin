@@ -5,7 +5,7 @@
 -export([new/0, read/0, save/0, dump/0, check/0, save/2]).
 %-define(potential_block, "data/potential_blocks.db").
 -define(refresh_period, 60).%how often we check if there are new txs that can be included in the block. in seconds
--include("../../records.hrl").
+-include("../records.hrl").
 -record(pb, {block, time}).
 init(ok) -> 
     process_flag(trap_exit, true),
@@ -32,10 +32,10 @@ handle_call({save, Txs, _Height}, _, _) ->
     Block = block:make(Top, Txs, PB#block.trees, keys:pubkey()),
     {reply, ok, #pb{block = Block, time = now()}};
 handle_call(save, _, _) -> 
-    Block = new_internal(""),
+    Block = new_internal(),
     {reply, ok, #pb{block = Block, time = now()}};
 handle_call(new, _, Old) -> 
-    Block = new_internal(Old#pb.block),
+    Block = new_internal(),
     {reply, ok, #pb{block = Block, time = now()}};
 handle_call(check, _From, X) -> 
     {reply, X#pb.block, X};
@@ -61,7 +61,7 @@ handle_call(read, _From, X) ->
 		TxChanged = tx_changed(NewTxs, CurrentTxs),
 		if
 		    TxChanged ->%if txs have changed
-			#pb{block = new_internal(B, TP), time = now()};
+			#pb{block = new_internal(), time = now()};
 		    true -> X#pb{time = now()}
 		end
 	end,
@@ -77,37 +77,22 @@ save(Txs, Height) -> gen_server:call(?MODULE, {save, Txs, Height}).
 dump() -> gen_server:call(?MODULE, dump).
 read() -> gen_server:call(?MODULE, read).
 check() -> gen_server:call(?MODULE, check).
-new_internal(Old, TP) ->
-    PH = Old#block.prev_hash,
-    PB = block:get_by_hash(PH),
-    %spawn(fun() ->
-	%	  tree_data:garbage(Old, PB)
-	%  end),
+new_internal() ->
+    TP = tx_pool:get(),
     new_internal2(TP).
-new_internal("") ->
-    TP = tx_pool:get(),
-    new_internal2(TP);
-new_internal(Old) ->
-    TP = tx_pool:get(),
-    new_internal(Old, TP).
 new_internal2(TP) ->
     Txs = TP#tx_pool.txs,
     T = TP#tx_pool.height,
     %B = api:height() == T,
-    B = true,
-    if
-	B ->
     %timer:sleep(200),
-	    PB = block:get_by_height(T),
-	    if
-		PB == empty -> "";
-		true ->
-		    Top = block:block_to_header(PB),%it would be way faster if we had a copy of the block's hash ready, and we just looked up the header by hash.
+    PB = block:get_by_height(T),
+    if
+	PB == empty -> "";
+	true ->
+	    Top = block:block_to_header(PB),%it would be way faster if we had a copy of the block's hash ready, and we just looked up the header by hash.
     %Top = headers:top_with_block(),
     %PB = block:get_by_hash(block:hash(Top)),
-		    block:make(Top, Txs, PB#block.trees, keys:pubkey())
-	    end;
-	true -> ""
+	    block:make(Top, Txs, PB#block.trees, keys:pubkey())
     end.
 tx_changed(New, Old) ->    
     N2 = tx_det_order(New),
