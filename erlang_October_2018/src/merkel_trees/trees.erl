@@ -1,5 +1,9 @@
 -module(trees).
--export([hash2int/1, verify_proof/5]).
+-export([hash2int/1, verify_proof/5, new/1, root_hash/1]).
+
+new(X) -> X.
+root_hash(X) ->
+    hash:doit(X).
 
 hash2int(X) ->
     U = size(X),

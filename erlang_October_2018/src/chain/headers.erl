@@ -1,7 +1,7 @@
 -module(headers).
 -behaviour(gen_server).
 -export([absorb/1, absorb_with_block/1, read/1, read_ewah/1, top/0, dump/0, top_with_block/0,
-         make_header/9, serialize/1, deserialize/1,
+         make_header/8, serialize/1, deserialize/1,
          difficulty_should_be/2, 
 	 ewah_range/2,
 	 test/0]).
@@ -148,7 +148,6 @@ check_pow(Header) ->
 check_difficulty(A) ->
     {B, EWAH} = case A#header.height < 2 of
             true ->
-                %{constants:initial_difficulty(), A#header.period};
                 {constants:initial_difficulty(), 1000000};
             false ->
                 {ok, PHeader} = read(A#header.prev_hash),
@@ -160,7 +159,7 @@ read_ewah(Hash) -> gen_server:call(?MODULE, {read_ewah, Hash}).
 top() -> gen_server:call(?MODULE, {top}).
 top_with_block() -> gen_server:call(?MODULE, {top_with_block}).
 dump() -> gen_server:call(?MODULE, {dump}).
-make_header(PH, 0, Time, Version, TreesHash, TxsProofHash, Nonce, Difficulty, Period) ->
+make_header(PH, 0, Time, Version, TreesHash, TxsProofHash, Nonce, Difficulty) ->
     #header{prev_hash = PH,
 	    height = 0, 
 	    time = Time, 
@@ -169,9 +168,8 @@ make_header(PH, 0, Time, Version, TreesHash, TxsProofHash, Nonce, Difficulty, Pe
 	    txs_proof_hash = TxsProofHash,
 	    nonce = <<Nonce:256>>,
 	    difficulty = Difficulty,
-	    accumulative_difficulty = 0,
-            period = Period};
-make_header(PH, Height, Time, Version, Trees, TxsProodHash, Nonce, Difficulty, Period) ->
+	    accumulative_difficulty = 0};
+make_header(PH, Height, Time, Version, Trees, TxsProodHash, Nonce, Difficulty) ->
     AC = case read(PH) of
             {ok, PrevHeader} ->
                 pow:sci2int(Difficulty) + 
@@ -186,15 +184,13 @@ make_header(PH, Height, Time, Version, Trees, TxsProodHash, Nonce, Difficulty, P
             txs_proof_hash = TxsProodHash,
 	    nonce = <<Nonce:256>>,
             difficulty = Difficulty,
-            accumulative_difficulty = AC,
-            period = Period}.
+            accumulative_difficulty = AC}.
 serialize(H) ->
     false = H#header.prev_hash == undefined,
     HtB = constants:height_bits(),
     TB = constants:time_bits(),
     VB = constants:version_bits(),
     DB = 16,
-    PB = constants:period_bits(),
     HB = constants:hash_size()*8,
     HB = bit_size(H#header.prev_hash),
     HB = bit_size(H#header.trees_hash),
@@ -207,15 +203,13 @@ serialize(H) ->
      (H#header.trees_hash)/binary,
      (H#header.txs_proof_hash)/binary,
      (H#header.difficulty):DB,
-     (H#header.nonce)/binary,
-     (H#header.period):PB
+     (H#header.nonce)/binary
     >>.
 deserialize(H) ->
     HB = constants:hash_size()*8,
     HtB = constants:height_bits(),
     TB = constants:time_bits(),
     VB = constants:version_bits(),
-    PB = constants:period_bits(),
     DB = 16,
     <<PrevHash:HB/bitstring,
      Height:HtB,
@@ -224,8 +218,7 @@ deserialize(H) ->
      TreesHash:HB/bitstring,
      TxsProofHash:HB/bitstring,
      Difficulty:DB,
-     Nonce:HB/bitstring,
-     Period:PB
+     Nonce:HB/bitstring
     >> = H,
     #header{prev_hash = PrevHash,
             height = Height,
@@ -234,7 +227,6 @@ deserialize(H) ->
             trees_hash = TreesHash,
             txs_proof_hash = TxsProofHash,
             difficulty = Difficulty,
-            period = Period,
             nonce = Nonce}.
 difficulty_should_be(NextHeader, A) ->%Next is built on A
     D1 = A#header.difficulty,
@@ -248,23 +240,7 @@ difficulty_should_be(NextHeader, A) ->%Next is built on A
 	end,
     {ok, {A, PrevEWAH}} = read_ewah(hash:doit(serialize(A))),
     EWAH = calc_ewah(NextHeader, A, PrevEWAH),
-    B2 = Height > forks:get(7),
-    if
-	B2 -> 
-	    %io:fwrite("prevewah is "),
-	    %io:fwrite(integer_to_list(PrevEWAH)),
-	    %io:fwrite("\n"),
-	    %io:fwrite("ewah is "),
-	    %io:fwrite(integer_to_list(EWAH)),
-	    %io:fwrite("\n"),
-	    {new_retarget(A, EWAH), EWAH};
-        (X == 0) and (not(Height < 10)) ->
-            %{difficulty_should_be2(A), A#header.period};
-            {difficulty_should_be2(A), EWAH};
-        true ->
-            %{D1, A#header.period}
-            {D1, EWAH}
-    end.
+    {new_retarget(A, EWAH), EWAH}.
 %-define(hashrate_converter, 1024).
 -define(hashrate_converter, 1024).
 new_retarget(Header, EWAH0) ->
@@ -272,55 +248,17 @@ new_retarget(Header, EWAH0) ->
     Diff = Header#header.difficulty,
     Hashes = pow:sci2int(Diff),
     Estimate = max(1, (?hashrate_converter * Hashes) div EWAH),%in seconds/10
-    %io:fwrite("period is "),
-    %io:fwrite(integer_to_list(P)),
-    %io:fwrite("\n"),
-    %io:fwrite("diff is "),
-    %io:fwrite(integer_to_list(Diff)),
-    %io:fwrite("\n"),
-    %io:fwrite("ewah is "),
-    %io:fwrite(integer_to_list(EWAH)),
-    %io:fwrite("\n"),
-    %io:fwrite("ewah is "),
-    %io:fwrite(integer_to_list(EWAH)),
-    %io:fwrite("\n"),
-    P = Header#header.period,
+    P = constants:period(),
     UL = (P * 6 div 4),
     LL = (P * 3 div 4),
-    %io:fwrite("estimate is "),
-    %io:fwrite(integer_to_list(LL)),
-    %io:fwrite(" "),
-    %io:fwrite(integer_to_list(Estimate)),
-    %io:fwrite(" "),
-    %io:fwrite(integer_to_list(UL)),
-    %io:fwrite("\n"),
-
-    %io:fwrite("\n"),
-    %UL = (P * 2) * TT,
-    %LL = P * TT,
     ND = if
 	     Estimate > UL -> pow:recalculate(Diff, UL, Estimate);
 	     Estimate < LL -> pow:recalculate(Diff, LL, Estimate);
 	     true -> Diff
 	 end,
-    %Estimate = Use EWAH and Diff to estimate the current period
     %if estimate is inside our target range, then leave the difficulty unchanged.
     %if estimate is outside of our target range, then adjust difficulty so that we are barely within the target range.
     max(ND, constants:initial_difficulty()).
-difficulty_should_be2(Header) ->
-    F = constants:retarget_frequency() div 2,
-    {Times1, Hash2000} = retarget(Header, F, []),
-    {Times2, _} = retarget(Hash2000, F, []),
-    M1 = median(Times1),
-    M2 = median(Times2),
-    Tbig = M1 - M2,
-    T0 = Tbig div F,%T is the estimated block time over last 2000 blocks.
-    T1 = max(1, T0),
-    T = min(T1, Header#header.period * 7 div 6),
-    NT = pow:recalculate(Hash2000#header.difficulty,
-                         Header#header.period,
-                         T),
-    max(NT, constants:initial_difficulty()).
 retarget(Header, 1, L) -> {L, Header};
 retarget(Header, N, L) ->
     {ok, PH} = read(Header#header.prev_hash),
@@ -338,7 +276,6 @@ empty_data() ->
     block_hashes:add(HH),
     #s{top = Header0, 
        top_with_block = Header0,
-       %headers = dict:store(HH,{Header0, Header0#header.period},dict:new())}.
        headers = dict:store(HH,{Header0, 1000000},dict:new())}.
 header_size() ->
     HB = constants:hash_size()*8,
@@ -443,7 +380,7 @@ ewah_range2(EH, Start, X) ->
 
 test() ->
     H = hash:doit(<<>>),
-    Header1 = make_header(H, 0, 0, 0, H, H, 0, 0, 0),
+    Header1 = make_header(H, 0, 0, 0, H, H, 0, 0),
     absorb([Header1]),
     H1 = hash:doit(serialize(Header1)),
     {ok, Header1} = read(H1),
@@ -451,11 +388,11 @@ test() ->
     
 test2() ->
     H = hash:doit(<<>>),
-    Header = setelement(10, make_header(H, 0, 0, 0, H, H, 0, 0, 0), undefined),
+    Header = setelement(10, make_header(H, 0, 0, 0, H, H, 0, 0), undefined),
     Header = deserialize(serialize(Header)),
     absorb([Header]),
     H1 = hash:doit(serialize(Header)),
-    Header2 = setelement(10, make_header(H1, 0, 0, 0, H, H, 0, 0, 0), undefined),
+    Header2 = setelement(10, make_header(H1, 0, 0, 0, H, H, 0, 0), undefined),
     absorb([Header2]),
     H1 = block:hash(Header),
     {ok, Header} = read(H1),

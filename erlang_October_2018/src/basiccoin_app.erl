@@ -9,6 +9,7 @@ start(_StartType, _StartArgs) ->
     application:start(inets),
     inets:start(),
     servers:start(),
+    utils:make_block_folders(),
     io:fwrite("starting node\n"),
     basiccoin_sup:start_link().
 

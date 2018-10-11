@@ -8,14 +8,12 @@
                  difficulty,
                  version,
                  nonce,
-                 accumulative_difficulty = 0,
-                 period}).
+                 accumulative_difficulty = 0}).
 -record(block, {height,
                 prev_hash,
                 trees_hash,
                 time,
                 difficulty,
-                period,
                 version,
                 nonce = 0,
                 trees,

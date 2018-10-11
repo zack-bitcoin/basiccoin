@@ -13,27 +13,14 @@ terminate(_, _) ->
     io:fwrite("block absorber died! \n"),
     ok.
 handle_info(_, X) -> {noreply, X}.
-%handle_cast(prune, X) ->
-%    trees:prune(),
-%    {noreply, X};
 handle_cast({doit, BP}, X) ->
     absorb_internal(BP),
     {noreply, now()}.
-%handle_call({prune, Blocks}, _, X) ->
-%    B = Blocks ++ trees:hash2blocks(recent_blocks:read()),
-%    trees:prune(B),
-%    {reply, ok, X};
 handle_call(check, _From, X) -> 
     {reply, X, X};
 handle_call({doit, BP}, _From, X) -> 
     Y = absorb_internal(BP),
     {reply, Y, now()}.
-%prune() -> gen_server:cast(?MODULE, prune).
-%synch_prune(Blocks) -> gen_server:call(?MODULE, {prune, Blocks}, 10000).
-%enqueue([]) -> ok;
-%enqueue([B|T]) -> enqueue(B, now()), enqueue(T);
-%enqueue(X) -> enqueue(X, now()).
-%enqueue(B, Time) -> gen_server:cast(?MODULE, {doit, B, Time}).
 check() -> gen_server:call(?MODULE, check).
 save([]) -> ok;
 save([T]) -> save(T);
@@ -177,7 +164,7 @@ do_save(BlockPlus) ->
     %found_block_timer:add(),%put it into headers instead.
     CompressedBlockPlus = zlib:compress(term_to_binary(BlockPlus)),
     Hash = block:hash(BlockPlus),
-    BlockFile = amoveo_utils:binary_to_file_path(blocks, Hash),
+    BlockFile = utils:binary_to_file_path(blocks, Hash),
     %io:fwrite("deleting blockfile "),
     %io:fwrite(BlockFile),
     %io:fwrite("\n"),

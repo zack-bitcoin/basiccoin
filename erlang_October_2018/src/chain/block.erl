@@ -56,8 +56,7 @@ block_to_header(B) ->
       B#block.trees_hash,
       StateRoot,
       B#block.nonce,
-      B#block.difficulty,
-      B#block.period).
+      B#block.difficulty).
 
 hash(error) -> 1=2;
 hash(B) when is_binary(B) ->%accepts binary headers
@@ -88,7 +87,7 @@ calculate_prev_hashes([PH|Hashes], Height, N) ->
     end.
 get_by_hash(H) ->
     Hash = hash(H),
-    BlockFile = amoveo_utils:binary_to_file_path(blocks, Hash),
+    BlockFile = utils:binary_to_file_path(blocks, Hash),
     case db:read(BlockFile) of
         [] -> empty;
         Block -> binary_to_term(zlib:uncompress(Block))
@@ -138,13 +137,13 @@ time_now() ->
     (os:system_time() div (1000000 * constants:time_units())) - constants:start_time().
 genesis_maker() ->
     Root0 = constants:root0(),
-    Pub = constants:master_pub(),
-    First = accounts:new(Pub, constants:initial_coins()),
-    GovInit = governance:genesis_state(),
-    Accounts = accounts:write(First, Root0),%This is leaking a small amount of memory, but it is probably too small to care about, since this function gets executed so rarely.
-    Trees = trees:new(Accounts, Root0, Root0, Root0, Root0, GovInit),
+    %Pub = constants:master_pub(),
+    %First = accounts:new(Pub, constants:initial_coins()),
+    %GovInit = governance:genesis_state(),
+    %Accounts = accounts:write(First, Root0),%This is leaking a small amount of memory, but it is probably too small to care about, since this function gets executed so rarely.
+    Accounts = Root0,
+    Trees = trees:new(Accounts),
     TreesRoot = trees:root_hash(Trees),
-    BlockPeriod = governance:get_value(block_period, GovInit),
     HistoryString = <<"bitcoin 511599  0000000000000000005cdf7dafbfa2100611f14908ad99098c2a91719da93a50">>,
     Hash = hash:doit(HistoryString),
     #block{height = 0,
@@ -153,7 +152,6 @@ genesis_maker() ->
            trees_hash = TreesRoot,
            time = 0,
            difficulty = constants:initial_difficulty(),
-           period = BlockPeriod,
            version = version:doit(0),
            trees = Trees,
            roots = make_roots(Trees)
@@ -221,15 +219,13 @@ make(Header, Txs0, Trees, Pub) ->
     BlockReward = constants:block_reward(),
     MarketCap = market_cap(OldBlock, BlockReward, Txs0, Dict, Height),
     TimeStamp = time_now(),
-    NextHeader = #header{height = Height + 1, prev_hash = PrevHash, time = TimeStamp, period = BlockPeriod},
+    NextHeader = #header{height = Height + 1, prev_hash = PrevHash, time = TimeStamp},
     Block = #block{height = Height + 1,
 		   prev_hash = hash(Header),
 		   txs = Txs,
 		   trees_hash = trees:root_hash(NewTrees),
 		   time = TimeStamp,
 		   difficulty = element(1, headers:difficulty_should_be(NextHeader, Header)),
-                   period = BlockPeriod,
-
 		   version = version:doit(Height+1),%constants:version(),
 		   trees = NewTrees,
 		   prev_hashes = calculate_prev_hashes(Header),
@@ -242,7 +238,7 @@ make(Header, Txs0, Trees, Pub) ->
     %_Dict = proofs:facts_to_dict(Proofs, dict:new()),
     Block.
 make_roots(Trees) ->
-    #roots{accounts = trie:root_hash(accounts, trees:accounts(Trees))}.
+    #roots{accounts = trie:root_hash(accounts, Trees)}.
 roots_hash(X) when is_record(X, roots) ->
     A = X#roots.accounts,
     hash:doit(<<A/binary>>).
@@ -382,7 +378,7 @@ no_coinbase([STx|T]) ->
 
 initialize_chain() -> 
     %only run genesis maker once, or else it corrupts the database.
-    {ok, L} = file:list_dir("blocks"),
+    {ok, L} = file:list_dir("data/blocks"),
     %B = length(L) < 1,
     B = true,
     GB = if

@@ -10,7 +10,7 @@ First, to compile the software and start an erlang shell with the libraries load
 `./rebar3 shell`
 
 Next, once the erlang shell is ready, turn on the blockchain:
-`application:ensure_all_started(basiccoin).`
+`utils:start().`
 
 
 Design
