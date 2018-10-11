@@ -1,17 +1,21 @@
 Completed
 ======
 
-* set up an erlang application with documentation for turning it on.
-* merkle tree database for accounts is working.
+* an erlang application with documentation for turning it on.
+* library dependencies for http.
+* library dependencies for merkel tree databases.
+* merkle tree database for accounts is working with a test.
 
 
 Todo
 ======
 
-* merkel tree database for txids that have been included in blocks.
 * processing txs to update the merkel trees.
+* headers database
+* blocks database
 * converting blocks to headers.
-* headers database + mining
 * syncing headers integration test
 * syncing blocks integration test
 * api for checking balance and sending tokens
+* tx pool threads
+* gen_server to keep track of what miners are working on.
