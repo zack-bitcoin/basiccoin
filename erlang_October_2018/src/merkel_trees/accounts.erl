@@ -9,6 +9,7 @@ new(Pub, Balance) ->
     #account{pubkey = Pub, balance = Balance, nonce = 0}.
 dict_update(Pub, Dict, Amount, NewNonce) ->
     Account = dict_get(Pub, Dict),
+    %io:fwrite(Account),
     OldNonce = Account#account.nonce,
     FinalNonce = case NewNonce of
                      none ->
@@ -29,7 +30,7 @@ dict_get(Key, Dict) ->
     case X of
         error -> empty;
         {ok, 0} -> empty;
-        {ok, Y} -> Y
+        {ok, Y} -> deserialize(Y)
     end.
 get(Pub, Accounts) ->
     PubId = key_to_int(Pub),

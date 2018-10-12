@@ -161,34 +161,11 @@ miner_fees([H|T]) ->
     element(4, testnet_sign:data(H)) + miner_fees(T).
    
 new_dict(Txs, Dict, Height) ->
-    Dict2 = txs:digest_from_dict(Txs, Dict, Height),
-    Dict2.
+    txs:digest_from_dict(Txs, Dict, Height).
 market_cap(OldBlock, BlockReward, Txs0, Dict, Height) ->
-    FH = forks:get(3),
-    if
-	FH > Height ->
-	    OldBlock#block.market_cap + 
-		BlockReward - 
-		burn_fees(Txs0);
-	Height == FH -> 
-	    MC1 = OldBlock#block.market_cap + 
-		BlockReward - 
-		burn_fees(Txs0),
-	    (MC1 * 6) div 5;
-	FH < Height ->
-	    DeveloperRewardVar = 
-		governance:dict_get_value(developer_reward, Dict),
-	    DeveloperReward = 
-		(BlockReward * 
-		 DeveloperRewardVar) div 
-		10000,
-	    OldBlock#block.market_cap + 
-		BlockReward - 
-		burn_fees(Txs0) + 
-		DeveloperReward
-    end.
-    
-    
+    %DeveloperReward = constants:developer_reward(),
+    OldBlock#block.market_cap + BlockReward - 
+	burn_fees(Txs0).% + DeveloperReward.
 make(Header, Txs0, Trees, Pub) ->
     {CB, _Proofs} = coinbase_tx:make(Pub, Trees),
     Txs = [CB|lists:reverse(Txs0)],
@@ -196,23 +173,14 @@ make(Header, Txs0, Trees, Pub) ->
     Querys = proofs:txs_to_querys(Txs, Trees, Height+1),
     Facts = proofs:prove(Querys, Trees),
     Dict = proofs:facts_to_dict(Facts, dict:new()),
-    NewDict0 = new_dict(Txs, Dict, Height + 1),
-    B = ((Height+1) == forks:get(5)),
-    NewDict = if
-		B -> 
-		      OQL = governance:new(governance:name2number(oracle_question_liquidity), constants:oracle_question_liquidity()),
-		      io:fwrite("block governance adjust "),
-		      io:fwrite(packer:pack(OQL)),
-		      governance:dict_write(OQL, NewDict0);
-		true -> NewDict0
-	    end,
+    NewDict = new_dict(Txs, Dict, Height + 1),
     MinerAddress = Pub,
     MinerReward = miner_fees(Txs0),
     MinerAccount = accounts:dict_update(MinerAddress, NewDict, MinerReward, none),
     NewDict2 = accounts:dict_write(MinerAccount, NewDict),
     NewTrees = tree_data:dict_update_trie(Trees, NewDict2),
     %Governance = trees:governance(NewTrees),
-    Governance = trees:governance(Trees),
+    %Governance = trees:governance(Trees),
     BlockPeriod = constants:block_period(),
     PrevHash = hash(Header),
     OldBlock = get_by_hash(PrevHash),
@@ -300,13 +268,7 @@ mine2(Block, Times) ->
     ParentPlus = get_by_hash(PH),
     Trees = ParentPlus#block.trees,
     MineDiff = Block#block.difficulty,
-    F2 = forks:get(2),
-    Height = Block#block.height,
-    Fork = if
-	       F2 > Height -> 0;
-	       true -> 1
-	   end,
-    case pow:pow(hash(Block), MineDiff, Times, Fork) of
+    case pow:pow(hash(Block), MineDiff, Times, 1) of
         false -> false;
         Pow -> Block#block{nonce = pow:nonce(Pow)}
     end.
@@ -326,6 +288,7 @@ check0(Block) ->%This verifies the txs in ram. is parallelizable
     Roots = Block#block.roots,
     PrevStateHash = roots_hash(Roots),
     {ok, PrevHeader} = headers:read(Block#block.prev_hash),
+    %io:fwrite([Roots, PrevStateHash, PrevHeader#header.trees_hash]),
     PrevStateHash = PrevHeader#header.trees_hash,
     Txs = Block#block.txs,
     true = proofs_roots_match(Facts, Roots),
@@ -359,14 +322,16 @@ check(Block) ->%This writes the result onto the hard drive database. This is non
     MarketCap = market_cap(OldBlock, BlockReward, Txs0, Dict, Height-1),
     true = Block#block.market_cap == MarketCap,
     MinerAddress = element(2, hd(Txs)),
-    FG6 = forks:get(6),
     MinerReward = miner_fees(Txs0),
     MinerAccount = accounts:dict_update(MinerAddress, NewDict, MinerReward, none),
     NewDict3 = accounts:dict_write(MinerAccount, NewDict),
     NewTrees3 = tree_data:dict_update_trie(OldTrees, NewDict3),
     Block2 = Block#block{trees = NewTrees3},
     TreesHash = Block2#block.trees_hash,
-    TreesHash = trees:root_hash2(NewTrees3, Roots),
+    %TreesHash = trees:root_hash2(NewTrees3, Roots),
+    %TreesHash = trees:root_hash(Roots#roots.accounts),
+    %TreesHash = hash:doit(trie:root_hash(accounts, Roots#roots.accounts)),
+    TreesHash = hash:doit(trie:root_hash(accounts, NewTrees3)),
     {true, Block2}.
 
 no_coinbase([]) -> true;
@@ -478,15 +443,15 @@ test(1) ->
     headers:absorb_with_block([Header1]),
     H1 = hash(Header1),
     H1 = hash(WBlock10),
-    {ok, _} = headers:read(H1),
+    {ok, Header1} = headers:read(H1),
     block_organizer:add([WBlock10]),
-    timer:sleep(100),
+    timer:sleep(200),
     WBlock11 = get_by_hash(H1),
     WBlock11 = get_by_height_in_chain(1, H1),
-    io:fwrite(packer:pack(WBlock11)),
-    io:fwrite("\n"),
-    io:fwrite(packer:pack(WBlock10)),
-    io:fwrite("\n"),
+    %io:fwrite(packer:pack(WBlock11)),
+    %io:fwrite("\n"),
+    %io:fwrite(packer:pack(WBlock10)),
+    %io:fwrite("\n"),
     WBlock10 = WBlock11#block{trees = WBlock10#block.trees},
     success;
 test(2) ->

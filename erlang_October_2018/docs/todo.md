@@ -5,15 +5,15 @@ Completed
 * library dependencies for http.
 * library dependencies for merkel tree databases.
 * merkle tree database for accounts is working with a test.
+* headers database test
+* blocks database test
+* converting blocks to headers.
 
 
 Todo
 ======
 
 * processing txs to update the merkel trees.
-* headers database
-* blocks database
-* converting blocks to headers.
 * syncing headers integration test
 * syncing blocks integration test
 * api for checking balance and sending tokens

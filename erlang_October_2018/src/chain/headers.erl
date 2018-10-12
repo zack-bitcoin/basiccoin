@@ -95,6 +95,12 @@ absorb([Header | T], CommonHash) ->
     Bool = Header#header.difficulty >= constants:initial_difficulty(),
     if
 	not(Bool) -> 
+	    io:fwrite(Bool),
+	    io:fwrite("\n"),
+	    io:fwrite(integer_to_list(Header#header.difficulty)),
+	    io:fwrite("\n"),
+	    io:fwrite(integer_to_list(constants:initial_difficulty())),
+	    io:fwrite("\n"),
 	    1=2,
 	    ok;%we should delete the peer that sent us this header.
 	true ->
@@ -110,9 +116,10 @@ absorb([Header | T], CommonHash) ->
 			true ->
 		      %check that there is enough pow for the difficulty written on the block
 			    case read(Header#header.prev_hash) of
-				error -> io:fwrite("don't have a parent for this header\n"),
-					 1=2,
-					 error;
+				error -> 
+				    io:fwrite("don't have a parent for this header\n"),
+				    1=2,
+				    error;
 				{ok, _} ->
 				    case check_difficulty(Header) of%check that the difficulty written on the block is correctly calculated
 					{true, _, EWAH} ->
@@ -125,7 +132,8 @@ absorb([Header | T], CommonHash) ->
 					    %io:fwrite("\n"),
 					    gen_server:call(?MODULE, {add, Hash, Header, EWAH}),
 					    absorb(T, CommonHash);
-					_ -> 
+					X -> 
+					    io:fwrite(X),
 					    1=2,
 					    io:fwrite("incorrectly calculated difficulty\n")
 				    end
@@ -137,13 +145,7 @@ check_pow(Header) ->
     MineDiff = Header#header.difficulty,
     Data = block:hash(Header#header{nonce = <<0:256>>}),
     <<Nonce:256>> = Header#header.nonce,
-    F2 = forks:get(2),
-    Height = Header#header.height,
-    Fork = if
-	       F2 > Height -> 0;
-	       true -> 1
-	   end,
-    pow:check_pow({pow, Data, MineDiff, Nonce}, constants:hash_size(), Fork).
+    pow:check_pow({pow, Data, MineDiff, Nonce}, constants:hash_size(), 1).
 
 check_difficulty(A) ->
     {B, EWAH} = case A#header.height < 2 of
@@ -230,14 +232,7 @@ deserialize(H) ->
             nonce = Nonce}.
 difficulty_should_be(NextHeader, A) ->%Next is built on A
     D1 = A#header.difficulty,
-    RF = constants:retarget_frequency(),
     Height = A#header.height,
-    %X = Height rem RF,%fork
-    B = Height > forks:get(4),
-    X = if
-	    B -> Height rem (RF div 2);
-	    true -> Height rem RF
-	end,
     {ok, {A, PrevEWAH}} = read_ewah(hash:doit(serialize(A))),
     EWAH = calc_ewah(NextHeader, A, PrevEWAH),
     {new_retarget(A, EWAH), EWAH}.
@@ -248,7 +243,7 @@ new_retarget(Header, EWAH0) ->
     Diff = Header#header.difficulty,
     Hashes = pow:sci2int(Diff),
     Estimate = max(1, (?hashrate_converter * Hashes) div EWAH),%in seconds/10
-    P = constants:period(),
+    P = constants:block_period(),
     UL = (P * 6 div 4),
     LL = (P * 3 div 4),
     ND = if
@@ -285,7 +280,7 @@ header_size() ->
     DB = 16,
     ((HB*4) + HtB + TB + VB + DB).
 add_to_top(H, T) ->
-    {ok, FT} = application:get_env(amoveo_core, fork_tolerance),
+    FT = constants:fork_tolerance(),
     B = length(T) < FT,
     if
         B -> [H|T];

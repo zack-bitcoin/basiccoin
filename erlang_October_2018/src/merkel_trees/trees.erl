@@ -1,9 +1,13 @@
 -module(trees).
--export([hash2int/1, verify_proof/5, new/1, root_hash/1]).
+-export([hash2int/1, verify_proof/5, new/1, root_hash/1,
+	accounts/1, update_accounts/2]).
 
 new(X) -> X.
 root_hash(X) ->
-    hash:doit(X).
+    S = serialize_roots(X),
+    hash:doit(S).
+serialize_roots(X) ->
+    trie:root_hash(accounts, X).
 
 hash2int(X) ->
     U = size(X),
@@ -19,3 +23,6 @@ verify_proof(TreeID, RootHash, Key, Value, Proof) ->
         end,
     Leaf = TreeID:make_leaf(Key, V, CFG),
     verify:proof(RootHash, Leaf, Proof, CFG).
+accounts(X) -> X.
+update_accounts(_, X) -> X.
+    

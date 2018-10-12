@@ -59,7 +59,9 @@ prove(Querys, Trees) ->
 prove2([], _) ->
     [];
 prove2([{Tree, Key}|T], Trees) ->
-    Branch = trees:Tree(Trees),
+    %Branch = trees:Tree(Trees),
+    Tree = accounts,
+    Branch = Trees,
     {Root, Data, Path} = Tree:get(Key, Branch),
     Data2 = case Data of
 		empty -> 0;

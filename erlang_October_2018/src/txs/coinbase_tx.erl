@@ -7,23 +7,21 @@ make_dict(From) ->
     Acc = trees:dict_tree_get(accounts, From),
     #coinbase{from = From}.
 make(From, Trees) ->
-    Accounts = trees:accounts(Trees),
-    {_, Acc, Proof} = accounts:get(From, Accounts),
+    Accounts = Trees,
+    {_, _Acc, Proof} = accounts:get(From, Accounts),
     Tx = #coinbase{from = From},
     {Tx, [Proof]}.
 go(Tx, Dict, NewHeight) ->
     From = Tx#coinbase.from,
     X = accounts:dict_get(From, Dict),
-    %io:fwrite(Dict),%contains the key {governance, 1}, 
-    BlockReward = governance:dict_get_value(block_reward, Dict),
+    BlockReward = constants:block_reward(),
     Nacc = case X of
                empty -> accounts:new(From, BlockReward);
                _ -> 
                    accounts:dict_update(From, Dict, BlockReward, none)
            end,
-    Dict2 = accounts:dict_write(Nacc, Dict),
-    DeveloperRewardVar = governance:dict_get_value(developer_reward, Dict),
-    DeveloperReward = (BlockReward * DeveloperRewardVar) div 10000,
-    M = accounts:dict_update(constants:master_pub(), Dict2, DeveloperReward, none),
-    accounts:dict_write(M, Dict2).
+    _Dict2 = accounts:dict_write(Nacc, Dict).
+    %DeveloperReward = constants:block_reward(),
+    %M = accounts:dict_update(constants:master_pub(), Dict2, DeveloperReward, none),
+    %accounts:dict_write(M, Dict2).
 

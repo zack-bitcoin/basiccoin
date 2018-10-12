@@ -3,7 +3,7 @@
 -export([start_link/0, init/1, stop/0]).
 
 -define(CHILD(I, Type), {I, {I, start_link, []}, permanent, 5000, Type, [I]}).
--define(keys, [block_hashes, headers, tx_pool, potential_block, block_absorber, block_organizer, recent_blocks, found_block_timer, tx_pool_feeder]).
+-define(keys, [keys, block_hashes, headers, tx_pool, potential_block, block_absorber, block_organizer, recent_blocks, found_block_timer, tx_pool_feeder, tree_data, sync, sync_kill, sync_mode]).
 start_link() -> 
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 child_killer([]) -> [];
