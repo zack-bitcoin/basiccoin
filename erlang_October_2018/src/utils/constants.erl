@@ -16,6 +16,8 @@ version_bits() -> 16.
 root0() -> 1.
 initial_difficulty() -> 1.
 block_reward() -> 100000000.
+burn_fee() -> 100000.%so 1 block reward pays for 100 txs
+    
 block_period() -> 100.
 time_units() -> 100.%0.1 seconds
 start_time() -> 15192951759.

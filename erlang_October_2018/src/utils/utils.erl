@@ -1,6 +1,7 @@
 -module(utils).
 -compile(export_all).
 
+-include("../records.hrl").
 start() -> application:ensure_all_started(basiccoin).
 binary_to_file_path(Code, Binary) ->
     Code = blocks,
@@ -24,3 +25,8 @@ mbf(N) ->
     H = to_hex(<<N>>),
     os:cmd("mkdir data/blocks/"++H),
     mbf(N+1).
+shared_secret(Pub, Priv) -> base64:encode(crypto:compute_key(ecdh, base64:decode(Pub), base64:decode(Priv), params())).
+params() -> crypto:ec_curve(secp256k1).
+sign_tx(Tx, Pub, Priv) ->
+    Sig = sign:sign(Tx, Priv),
+    #signed{data = Tx, sig = Sig}.

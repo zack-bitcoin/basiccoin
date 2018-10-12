@@ -23,11 +23,7 @@
                 roots,
                 hash = <<>>,
 		market_cap = 0}).
--record(acc, {balance = 0, %amount of money you have
-	      nonce = 0, %increments with every tx you put on the chain. 
-	      pubkey = <<>>,
-	      bets = 1,%This is a pointer to the merkel tree that stores how many bets you have made in each oracle.
-              bets_hash = <<>>}).
+-record(account, {balance = 0, nonce = 0, pubkey = <<>>}).
 -record(tx_pool, {txs = [],
                   %trees,%this changes once per tx
                   block_trees,%this changes once per block
@@ -42,3 +38,4 @@
 	       to = 0,
 	       amount = 0,
 	       version = 0}).
+-record(signed, {data, sig}).	  

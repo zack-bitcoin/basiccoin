@@ -39,15 +39,15 @@ store(Pub, Priv, Brainwallet) ->
     db:save(?LOC, X),
     X.
 handle_call({ss, Pub}, _From, R) ->
-    {reply, testnet_sign:shared_secret(Pub, R#f.priv), R};
+    {reply, utils:shared_secret(Pub, R#f.priv), R};
 handle_call({raw_sign, _}, _From, R) when R#f.priv=="" ->
     {reply, "need to unlock passphrase", R};
 handle_call({raw_sign, M}, _From, X) when not is_binary(M) ->
     {reply, "not binary", X};
 handle_call({raw_sign, M}, _From, R) ->
-    {reply, testnet_sign:sign(M, R#f.priv), R};
+    {reply, sign:sign(M, R#f.priv), R};
 handle_call({sign, M}, _From, R) -> 
-    {reply, testnet_sign:sign_tx(M, R#f.pub, R#f.priv), R};
+    {reply, utils:sign_tx(M, R#f.pub, R#f.priv), R};
 handle_call(status, _From, R) ->
     Y = db:read(?LOC),
     Out = if
