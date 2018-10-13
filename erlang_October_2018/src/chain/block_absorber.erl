@@ -62,9 +62,16 @@ absorb_internal(Block) ->
 	    %io:fwrite("\n"),
 	    Bool = block_hashes:check(NextBlock),
 	    if
-		Height == 0 -> 0;
-		BHC -> 3; %we already have this block
-		not(Bool) -> 0;%we dont' know the previous block
+		Height == 0 -> 
+		    io:fwrite("0 height error\n"),
+		    0;
+		BHC -> 
+		    io:fwrite("already have this block error\n"),
+		    3; %we already have this block
+		%(not(Bool) and not(Height == 1))-> 
+		not(Bool) -> 
+		    io:fwrite("previous block doesn't match error\n"),
+		    0;%we dont' know the previous block
 		true ->
 		    %io:fwrite("block absorber 1.2\n"),
 		    %io:fwrite(packer:pack(erlang:timestamp())),
@@ -124,19 +131,9 @@ absorb_internal(Block) ->
 			    OldTxs = tl(Block#block.txs),
 			    Keep = lists:filter(fun(T) -> not(tx_pool_feeder:is_in(testnet_sign:data(T), OldTxs)) end, Txs),%This n**2 algorithm is slow. We can make it n*log(n) by sorting both lists first, and then comparing them.
 			    tx_pool_feeder:absorb_dump(Block2, lists:reverse(Keep)),
-			    %tx_pool_feeder:dump(Block2),
-			    %tx_pool_feeder:empty_mailbox(),
-			    %tx_pool_feeder:absorb_async(lists:reverse(Keep)),
-			    potential_block:dump(),
-			    %spawn(fun() ->
-				%	  timer:sleep(2000),
-				%	  potential_block:dump()
-				%  end),
-			    order_book:match();
-			    %sync:push_new_block(Block2);
+			    potential_block:dump();
 			quick -> 
-			    recent_blocks:add(BH, Header#header.accumulative_difficulty, Height),%garbage collection
-			    %0.45 0.4 0.3
+			    recent_blocks:add(BH, Header#header.accumulative_difficulty, Height),
 			    %io:fwrite("block absorber 6\n"),
 			    %io:fwrite(packer:pack(erlang:timestamp())),
 			    %io:fwrite("\n"),
@@ -216,7 +213,7 @@ recover(Mode) ->
     sync_kill:start(),
     sync_mode:quick(),
     %timer:sleep(100),
-    io:fwrite("recover 1\n"),
+    %io:fwrite("recover 1\n"),
     {ok, BlockFiles} = file:list_dir("blocks/"),
     Block = case Mode of
 		full ->
@@ -239,12 +236,10 @@ recover(Mode) ->
     %end,
 						%TBFs),
 %Block = highest_block(hd(Blocks), tl(Blocks)),
-    io:fwrite("heighest block \n"),
-    io:fwrite("recover 2\n"),
-    io:fwrite(integer_to_list(Block#block.height)),
-    io:fwrite("is block height \n"),
-
-
+    %io:fwrite("heighest block \n"),
+    %io:fwrite("recover 2\n"),
+    %io:fwrite(integer_to_list(Block#block.height)),
+    %io:fwrite("is block height \n"),
     BH = Block#block.height,
     B2 = block:height(),
     Hashes = if
@@ -252,11 +247,11 @@ recover(Mode) ->
 		     [block:hash(Block)|hashes_to_root(Block)];
 		 true -> []
 	     end,
-    io:fwrite("recover 3\n"),
-    io:fwrite(integer_to_list(length(Hashes))),
-    io:fwrite(" is many hashes\n"),
+    %io:fwrite("recover 3\n"),
+    %io:fwrite(integer_to_list(length(Hashes))),
+    %io:fwrite(" is many hashes\n"),
     %io:fwrite(packer:pack(hd(lists:reverse(Hashes)))),
-    io:fwrite("\n"),
+    %io:fwrite("\n"),
     Pid = block_organizer:pid(),
     read_absorb(lists:reverse(Hashes), Pid, []).
 hashes_to_root(Block) ->

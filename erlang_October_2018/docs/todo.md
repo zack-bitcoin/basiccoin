@@ -9,16 +9,16 @@ Completed
 * blocks database test
 * converting blocks to headers.
 * processing txs to update the merkel trees.
-
+* api for checking balance
+* mining works.
+* api to turn mining on and off
+* check that difficulty is adjusting correctly while mining.
+* change the POW so it is different from Amoveo.
 
 Todo
 ======
 
-* api for checking balance
 * api to spend tokens
-* api to turn mining on and off
 * api to shut off the node
-* check that difficulty is adjusting correctly while mining.
 * syncing headers integration test
 * syncing blocks integration test
-* change the POW so it is different from Amoveo.

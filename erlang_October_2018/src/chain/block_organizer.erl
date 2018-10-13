@@ -39,8 +39,6 @@ helper([]) -> [];
 helper([[]]) -> [];
 helper([H|T]) ->
     %we should run this in the background, and if H has an error, don't drop the rest of the list.
-
-    %io:fwrite("organizer helper\n"),
     MyHeight = block:height(),
     HH = hd(H),
     H2 = HH#block.height,
@@ -55,7 +53,6 @@ check() -> gen_server:cast(?MODULE, check).
 add([]) -> 0;
 add(Blocks) when not is_list(Blocks) -> 0;
 add(Blocks) ->
-    %io:fwrite("block organizer add\n"),
     true = is_list(Blocks),
     {Blocks2, AddReturn} = add1(Blocks, []),
     add3(Blocks2),

@@ -64,7 +64,7 @@ hash(B) when is_binary(B) ->%accepts binary headers
         true ->
             B;
         false ->
-            hash:doit(B)
+            hash:doit(hash:doit(B))
     end;
 hash(B) when element(1, B) == header ->
     hash(headers:serialize(B));
@@ -237,6 +237,7 @@ mine(Rounds) ->
     Block = potential_block:read(),
     case Block of
 	"" ->
+	    io:fwrite("potential block empty\n"),
 	    timer:sleep(100),
 	    mine(Rounds);
 	_ ->
@@ -252,13 +253,11 @@ mine(Block, Rounds, Cores) ->
                 case mine2(Block, Rounds) of
                     false -> false;
                     PBlock ->
-                        io:fwrite("found a block"),
+                        io:fwrite("found a block\n"),
                         Header = block_to_header(PBlock),
                         headers:absorb([Header]),
 			headers:absorb_with_block([Header]),
-                        %block_absorber:save(PBlock),
                         block_organizer:add([PBlock])
-                        %sync:start()
                 end
         end,
     spawn_many(Cores-1, F),
@@ -353,6 +352,7 @@ initialize_chain() ->
         true -> get_by_height(0)
          end,
     Header0 = block_to_header(GB),
+    block_hashes:add(block:hash(Header0)),
     gen_server:call(headers, {add, block:hash(Header0), Header0, 1}),
     gen_server:call(headers, {add_with_block, block:hash(Header0), Header0}),
     Header0.

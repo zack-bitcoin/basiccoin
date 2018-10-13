@@ -14,13 +14,13 @@ time_bits() -> 40.
 version_bits() -> 16.
 
 root0() -> 1.
-initial_difficulty() -> 1.
+initial_difficulty() -> 3000.
 block_reward() -> 100000000.
 burn_fee() -> 100000.%so 1 block reward pays for 100 txs
     
 block_period() -> 100.
 time_units() -> 100.%0.1 seconds
-start_time() -> 15192951759.
+start_time() -> 15394599073.
 max_block_size() -> 1000000.
     
     
@@ -35,5 +35,6 @@ block_hashes() -> "data/block_hashes.db".
 recent_blocks() -> "data/recent_blocks.db".
 keys() -> "keys.db".
 recent_blocks_period() -> 3. %this is how frequently we calculate which blocks should no longer be tracked for pruning.
-    
+fork_tolerance() ->    
+    50. %this node is unable to recover if a chain of more than this many blocks gets orphaned.
     

@@ -17,6 +17,11 @@ Next, once the erlang shell is ready, turn on the blockchain:
 If you want to make txs, you need to unlock your keys:
 `keys:unlock("").`
 
+After you finish syncing the blocks, switch to sync mode normal before mining.
+`sync_mode:normal().`
+you also need sync_mode normal for running tests.
+
+
 
 Design
 =======

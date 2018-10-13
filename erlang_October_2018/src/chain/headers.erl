@@ -233,7 +233,7 @@ deserialize(H) ->
 difficulty_should_be(NextHeader, A) ->%Next is built on A
     D1 = A#header.difficulty,
     Height = A#header.height,
-    {ok, {A, PrevEWAH}} = read_ewah(hash:doit(serialize(A))),
+    {ok, {A, PrevEWAH}} = read_ewah(block:hash(serialize(A))),
     EWAH = calc_ewah(NextHeader, A, PrevEWAH),
     {new_retarget(A, EWAH), EWAH}.
 %-define(hashrate_converter, 1024).
@@ -377,7 +377,7 @@ test() ->
     H = hash:doit(<<>>),
     Header1 = make_header(H, 0, 0, 0, H, H, 0, 0),
     absorb([Header1]),
-    H1 = hash:doit(serialize(Header1)),
+    H1 = block:hash(serialize(Header1)),
     {ok, Header1} = read(H1),
     success.
     
@@ -386,7 +386,7 @@ test2() ->
     Header = setelement(10, make_header(H, 0, 0, 0, H, H, 0, 0), undefined),
     Header = deserialize(serialize(Header)),
     absorb([Header]),
-    H1 = hash:doit(serialize(Header)),
+    H1 = block:hash(serialize(Header)),
     Header2 = setelement(10, make_header(H1, 0, 0, 0, H, H, 0, 0), undefined),
     absorb([Header2]),
     H1 = block:hash(Header),
