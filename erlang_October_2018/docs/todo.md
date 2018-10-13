@@ -8,14 +8,17 @@ Completed
 * headers database test
 * blocks database test
 * converting blocks to headers.
+* processing txs to update the merkel trees.
 
 
 Todo
 ======
 
-* processing txs to update the merkel trees.
+* api for checking balance
+* api to spend tokens
+* api to turn mining on and off
+* api to shut off the node
+* check that difficulty is adjusting correctly while mining.
 * syncing headers integration test
 * syncing blocks integration test
-* api for checking balance and sending tokens
-* tx pool threads
-* gen_server to keep track of what miners are working on.
+* change the POW so it is different from Amoveo.
