@@ -26,6 +26,14 @@ To turn off your node, first turn off syncing if it is on:
 then turn the node off:
 `api:stop().`
 
+to check your balance:
+`api:balance().`
+output is measured in satoshis.
+
+to spend tokens:
+`api:spend(To, Amount).`
+Amount is in Satoshis. 
+
 
 
 Design
