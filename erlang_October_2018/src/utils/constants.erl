@@ -37,4 +37,7 @@ keys() -> "keys.db".
 recent_blocks_period() -> 3. %this is how frequently we calculate which blocks should no longer be tracked for pruning.
 fork_tolerance() ->    
     50. %this node is unable to recover if a chain of more than this many blocks gets orphaned.
-    
+minimum_tx_fee() ->    
+    1.
+tx_fee() ->
+    0.

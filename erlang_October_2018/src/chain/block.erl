@@ -158,7 +158,7 @@ genesis_maker() ->
           }.
 miner_fees([]) -> 0;
 miner_fees([H|T]) ->
-    element(4, testnet_sign:data(H)) + miner_fees(T).
+    element(4, H#signed.data) + miner_fees(T).
    
 new_dict(Txs, Dict, Height) ->
     txs:digest_from_dict(Txs, Dict, Height).
@@ -175,7 +175,7 @@ make(Header, Txs0, Trees, Pub) ->
     Dict = proofs:facts_to_dict(Facts, dict:new()),
     NewDict = new_dict(Txs, Dict, Height + 1),
     MinerAddress = Pub,
-    MinerReward = miner_fees(Txs0),
+    MinerReward = miner_fees(Txs0) - burn_fees(Txs0),
     MinerAccount = accounts:dict_update(MinerAddress, NewDict, MinerReward, none),
     NewDict2 = accounts:dict_write(MinerAccount, NewDict),
     NewTrees = tree_data:dict_update_trie(Trees, NewDict2),
@@ -321,7 +321,7 @@ check(Block) ->%This writes the result onto the hard drive database. This is non
     MarketCap = market_cap(OldBlock, BlockReward, Txs0, Dict, Height-1),
     true = Block#block.market_cap == MarketCap,
     MinerAddress = element(2, hd(Txs)),
-    MinerReward = miner_fees(Txs0),
+    MinerReward = miner_fees(Txs0) - burn_fees(Txs0),
     MinerAccount = accounts:dict_update(MinerAddress, NewDict, MinerReward, none),
     NewDict3 = accounts:dict_write(MinerAccount, NewDict),
     NewTrees3 = tree_data:dict_update_trie(OldTrees, NewDict3),
@@ -335,7 +335,7 @@ check(Block) ->%This writes the result onto the hard drive database. This is non
 
 no_coinbase([]) -> true;
 no_coinbase([STx|T]) ->
-    Tx = testnet_sign:data(STx),
+    Tx = STx#signed.data,
     Type = element(1, Tx),
     false = Type == coinbase,
     no_coinbase(T).
@@ -359,9 +359,9 @@ initialize_chain() ->
 
 burn_fees([]) -> 0;
 burn_fees([Tx|T]) ->
-    C = testnet_sign:data(Tx),
+    C = Tx#signed.data,
     Type = element(1, C),
-    A = constants:tx_fee(),
+    A = constants:burn_fee(),
     A + burn_fees(T).
 all_mined_by(Address) ->
     B = top(),

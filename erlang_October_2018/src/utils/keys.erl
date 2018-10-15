@@ -77,7 +77,7 @@ handle_cast({load, Pub, Priv, Brainwallet}, _R) ->
     store(Pub, Priv, Brainwallet),
     {noreply, #f{pub=Pub, priv=Priv}};
 handle_cast({new, Brainwallet}, _R) ->
-    {Pub, Priv} = testnet_sign:new_key(),
+    {Pub, Priv} = sign2:new_key(),
     store(Pub, Priv, Brainwallet),
     {noreply, #f{pub=Pub, priv=Priv}};
 handle_cast({unlock, Brainwallet}, _) ->
@@ -137,5 +137,5 @@ test() ->
     unlocked = keys:status(),
     Tx = {spend, 1, 1, 2, 1, 1},
     Stx = sign(Tx),
-    true = testnet_sign:verify(Stx, 1),
+    true = sign2:verify_tx(Stx),
     success.

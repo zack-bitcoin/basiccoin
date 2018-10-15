@@ -15,10 +15,10 @@ Completed
 * check that difficulty is adjusting correctly while mining.
 * change the POW so it is different from Amoveo.
 * api to shut off the node
+* api to spend tokens
 
 Todo
 ======
 
-* api to spend tokens
 * syncing headers integration test
 * syncing blocks integration test

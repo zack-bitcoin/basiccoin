@@ -38,8 +38,24 @@ mine(2) ->
     0.
 break() ->    
     1=2.
-spend() ->
-    ok.
+spend(ID0, Amount) ->
+    ID = decode_pubkey(ID0),
+    K = keys:pubkey(),
+    if 
+	ID == K -> io:fwrite("you can't spend money to yourself\n");
+	true -> 
+	    Tx = spend_tx:make_dict(ID, Amount, constants:burn_fee(), keys:pubkey()),
+	    tx_maker0(Tx)
+    end.
+tx_maker0(Tx) -> 
+    case keys:sign(Tx) of
+	{error, locked} -> 
+	    io:fwrite("your password is locked. use `keys:unlock(\"PASSWORD1234\")` to unlock it"),
+	    ok;
+	Stx -> 
+	    tx_pool_feeder:absorb(Stx),
+	    hash:doit(Tx)
+    end.
 
 stop() ->
     basiccoin_sup:stop(),

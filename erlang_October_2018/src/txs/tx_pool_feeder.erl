@@ -37,7 +37,7 @@ terminate(_, _) ->
 code_change(_, S, _) -> {ok, S}.
 is_in(_, []) -> false;
 is_in(Tx, [STx2 | T]) ->
-    Tx2 = testnet_sign:data(STx2),
+    Tx2 = STx2#signed.data,
     (Tx == Tx2) orelse (is_in(Tx, T)).
 absorb_internal(SignedTx) ->
     S = self(),
@@ -60,16 +60,17 @@ absorb_internal(SignedTx) ->
 	    
 	    
 absorb_internal2(SignedTx, PID) ->
-    Tx = testnet_sign:data(SignedTx),
+    %Tx = testnet_sign:data(SignedTx),
+    Tx = SignedTx#signed.data,
     F = tx_pool:get(),
     Txs = F#tx_pool.txs,
     case is_in(Tx, Txs) of
         true -> PID ! error;
         false -> 
-	    true = testnet_sign:verify(SignedTx),
+	    %true = testnet_sign:verify(SignedTx),
+	    true = sign2:verify_tx(SignedTx),
 	    Fee = element(4, Tx),
 	    Type = element(1, Tx),
-	    {ok, MinimumTxFee} = application:get_env(amoveo_core, minimum_tx_fee),
 	    MinimumTxFee = constants:minimum_tx_fee(),
 	    true = Fee > MinimumTxFee,
 	    X = absorb_unsafe(SignedTx),
