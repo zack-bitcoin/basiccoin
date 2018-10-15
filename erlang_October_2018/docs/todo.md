@@ -14,11 +14,11 @@ Completed
 * api to turn mining on and off
 * check that difficulty is adjusting correctly while mining.
 * change the POW so it is different from Amoveo.
+* api to shut off the node
 
 Todo
 ======
 
 * api to spend tokens
-* api to shut off the node
 * syncing headers integration test
 * syncing blocks integration test

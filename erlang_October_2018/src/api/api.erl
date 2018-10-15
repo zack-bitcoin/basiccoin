@@ -41,3 +41,7 @@ break() ->
 spend() ->
     ok.
 
+stop() ->
+    basiccoin_sup:stop(),
+    ok = application:stop(basiccoin),
+    io:fwrite("stopping node\n").

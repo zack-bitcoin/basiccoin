@@ -3,14 +3,15 @@
 -export([start_link/0, init/1, stop/0]).
 
 -define(CHILD(I, Type), {I, {I, start_link, []}, permanent, 5000, Type, [I]}).
--define(keys, [keys, block_hashes, headers, tx_pool, potential_block, block_absorber, block_organizer, recent_blocks, found_block_timer, tx_pool_feeder, tree_data, sync, sync_kill, sync_mode, mine, push_block]).
+-define(keys, [sync_kill, sync_mode, keys, recent_blocks, block_hashes, headers, block_absorber, block_organizer, tx_pool, tx_pool_feeder, mine, sync, tree_data, potential_block, push_block, found_block_timer]).
 start_link() -> 
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 child_killer([]) -> [];
 child_killer([H|T]) -> 
-    supervisor:terminate_child(testnet_sup, H),
+    supervisor:terminate_child(?MODULE, H),
     child_killer(T).
-stop() -> child_killer(?keys).
+stop() -> 
+    child_killer(lists:reverse(?keys)).
 
 child_maker([]) -> [];
 child_maker([H|T]) -> [?CHILD(H, worker)|child_maker(T)].

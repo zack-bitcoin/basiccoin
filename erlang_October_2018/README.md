@@ -21,6 +21,11 @@ After you finish syncing the blocks, switch to sync mode normal before mining.
 `sync_mode:normal().`
 you also need sync_mode normal for running tests.
 
+To turn off your node, first turn off syncing if it is on:
+`sync:stop()`.
+then turn the node off:
+`api:stop().`
+
 
 
 Design
